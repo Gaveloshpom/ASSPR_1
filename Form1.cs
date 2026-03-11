@@ -1,0 +1,237 @@
+﻿using System.Text;
+using static ASSPR_1.Program;
+
+namespace ASSPR_1
+{
+    public partial class Form1 : Form
+    {
+        public Form1()
+        {
+            Console.OutputEncoding = Encoding.UTF8;
+            InitializeComponent();
+        }
+
+        private void dgvMatrixA_CellContentClick(object sender, DataGridViewCellEventArgs e)
+        {
+
+        }
+
+        private void dataGridView1_CellContentClick_1(object sender, DataGridViewCellEventArgs e)
+        {
+
+        }
+
+        private void Form1_Load(object sender, EventArgs e)
+        {
+
+        }
+
+        private void ShowMatrixInGrid(double[,] matrix, DataGridView grid)
+        {
+            int n = matrix.GetLength(0);
+            int m = matrix.GetLength(1);
+
+            grid.RowCount = n;
+            grid.ColumnCount = m;
+
+            for (int i = 0; i < n; i++)
+            {
+                for (int j = 0; j < m; j++)
+                {
+                    // Округлимо до 3 знаків для краси
+                    grid.Rows[i].Cells[j].Value = Math.Round(matrix[i, j], 3);
+                }
+            }
+        }
+
+        // Метод для зчитування даних з DataGridView у масив double[,]
+        private double[,] GetMatrixFromGrid(DataGridView grid)
+        {
+            int n = grid.RowCount;
+            int m = grid.ColumnCount;
+            double[,] matrix = new double[n, m];
+
+            for (int i = 0; i < n; i++)
+            {
+                for (int j = 0; j < m; j++)
+                {
+                    matrix[i, j] = Convert.ToDouble(grid.Rows[i].Cells[j].Value);
+                }
+            }
+            return matrix;
+        }
+
+        private double[] GetVectorFromGrid(DataGridView grid)
+        {
+            int n = grid.RowCount;
+            double[] vector = new double[n];
+
+            for (int i = 0; i < n; i++)
+            {
+                // Зчитуємо значення з єдиної колонки (індекс 0)
+                vector[i] = Convert.ToDouble(grid.Rows[i].Cells[0].Value);
+            }
+            return vector;
+        }
+
+        // Обробник натискання кнопки "Знайти обернену матрицю"
+        private void btnInverse_Click(object sender, EventArgs e)
+        {
+            try
+            {
+                // 1. Отримуємо матрицю A з інтерфейсу
+                double[,] A = GetMatrixFromGrid(dgvMatrixA);
+
+                // 2. Обчислюємо за алгоритмом ЗЖВ
+                double[,] invA = MatrixMath.Inverse(A);
+
+                // 3. Виводимо результат у таблицю для результатів
+                ShowMatrixInGrid(invA, dgvVectorB);
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show("Помилка: " + ex.Message);
+            }
+        }
+
+        private void FillVariant15()
+        {
+            dgvMatrixA.RowCount = 3;
+            dgvMatrixA.ColumnCount = 3;
+
+            dgvVectorB.RowCount = 3;
+            dgvVectorB.ColumnCount = 1;
+
+            // Матриця A для варіанту 15
+            double[,] a = { { 3, 5, 1 }, { -2, 2, -3 }, { 1, 3, -2 } };
+            // Вектор B для варіанту 15
+            double[] b = { 1, 7, 4 };
+
+            for (int i = 0; i < 3; i++)
+            {
+                dgvVectorB.Rows[i].Cells[0].Value = b[i];
+                for (int j = 0; j < 3; j++)
+                    dgvMatrixA.Rows[i].Cells[j].Value = a[i, j];
+            }
+        }
+
+        private void BtnFill_Click(object sender, EventArgs e)
+        {
+            FillVariant15();
+        }
+
+        private void btnMethod2_Click(object sender, EventArgs e)
+        {
+            try
+            {
+                double[,] A = GetMatrixFromGrid(dgvMatrixA);
+                double[] B = GetVectorFromGrid(dgvVectorB);
+
+                double[] results = MatrixMath.SolveMethod2(A, B);
+
+                dgvResult.RowCount = results.Length;
+                dgvResult.ColumnCount = 1;
+                for (int i = 0; i < results.Length; i++)
+                    dgvResult.Rows[i].Cells[0].Value = Math.Round(results[i], 3);
+            }
+            catch (Exception ex) { MessageBox.Show(ex.Message); }
+        }
+
+        private void btnInverse_Click_1(object sender, EventArgs e)
+        {
+            try
+            {
+                double[,] A = GetMatrixFromGrid(dgvMatrixA);
+
+                double[,] invA = MatrixMath.Inverse(A);
+
+                ShowMatrixInGrid(invA, dgvResult);
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show("Помилка: " + ex.Message);
+            }
+        }
+
+        private void btnRank_Click(object sender, EventArgs e)
+        {
+            try
+            {
+                double[,] A = GetMatrixFromGrid(dgvMatrixA);
+
+                int rank = MatrixMath.Rank(A);
+
+                MessageBox.Show($"Ранг матриці А дорівнює: {rank}", "Результат");
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show("Помилка: " + ex.Message);
+            }
+        }
+
+        private void btnMethod1_Click(object sender, EventArgs e)
+        {
+            try
+            {
+                double[,] A = GetMatrixFromGrid(dgvMatrixA);
+                double[] B = GetVectorFromGrid(dgvVectorB);
+
+                double[] X = MatrixMath.SolveMethod1(A, B);
+
+                double[,] resultMatrix = new double[X.Length, 1];
+                for (int i = 0; i < X.Length; i++) resultMatrix[i, 0] = X[i];
+
+                ShowMatrixInGrid(resultMatrix, dgvResult);
+            }
+            catch (Exception ex) { MessageBox.Show("Помилка: " + ex.Message); }
+        }
+
+        private void btnMethod3_Click(object sender, EventArgs e)
+        {
+            try
+            {
+                double[,] A = GetMatrixFromGrid(dgvMatrixA);
+                double[] B = GetVectorFromGrid(dgvVectorB);
+
+                double[] X = MatrixMath.SolveMethod3(A, B);
+
+                double[,] resultMatrix = new double[X.Length, 1];
+                for (int i = 0; i < X.Length; i++) resultMatrix[i, 0] = X[i];
+
+                ShowMatrixInGrid(resultMatrix, dgvResult);
+            }
+            catch (Exception ex) { MessageBox.Show("Помилка: " + ex.Message); }
+        }
+
+        private void label1_Click(object sender, EventArgs e)
+        {
+
+        }
+
+        private void label3_Click(object sender, EventArgs e)
+        {
+
+        }
+
+        private void btnResize_Click(object sender, EventArgs e)
+        {
+            int rows = (int)numRows.Value;
+            int cols = (int)numCols.Value;
+
+            dgvMatrixA.RowCount = rows;
+            dgvMatrixA.ColumnCount = cols;
+
+            dgvVectorB.RowCount = rows;
+            dgvVectorB.ColumnCount = 1;
+
+            dgvResult.RowCount = rows;
+            dgvResult.ColumnCount = 1;
+
+            for (int j = 0; j < cols; j++)
+            {
+                dgvMatrixA.Columns[j].HeaderText = $"x{j + 1}";
+                dgvMatrixA.Columns[j].Width = 50;
+            }
+        }
+    }
+}
