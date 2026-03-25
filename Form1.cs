@@ -102,9 +102,9 @@ namespace ASSPR_1
             dgvVectorB.RowCount = 3;
             dgvVectorB.ColumnCount = 1;
 
-            // Матриця A для варіанту 15
+            // Матриця A 
             double[,] a = { { 3, 5, 1 }, { -2, 2, -3 }, { 1, 3, -2 } };
-            // Вектор B для варіанту 15
+            // Вектор B
             double[] b = { 1, 7, 4 };
 
             for (int i = 0; i < 3; i++)

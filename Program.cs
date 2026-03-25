@@ -16,11 +16,9 @@ namespace ASSPR_1
             Application.Run(new Form1());
         }
 
-
-
         public class MatrixMath
         {
-            // 1. Базовий алгоритм ЗЖВ (згідно з Рисунком 1.1)
+            // Базовий алгоритм ЗЖВ
             public static double[,] ZHV_Step(double[,] A, int r, int s)
             {
                 int n = A.GetLength(0);
@@ -46,7 +44,7 @@ namespace ASSPR_1
                 return B;
             }
 
-            // 2. Пошук оберненої матриці
+            // Пошук оберненої матриці
             public static double[,] Inverse(double[,] matrix)
             {
                 int n = matrix.GetLength(0);
@@ -54,7 +52,6 @@ namespace ASSPR_1
 
                 double[,] result = (double[,])matrix.Clone();
 
-                // Проходимо по головній діагоналі
                 for (int i = 0; i < n; i++)
                 {
                     result = ZHV_Step(result, i, i);
@@ -63,7 +60,7 @@ namespace ASSPR_1
                 return result;
             }
 
-            // 3. Обчислення рангу матриці
+            // Обчислення рангу матриці
             public static int Rank(double[,] A)
             {
                 int n = A.GetLength(0);
@@ -82,7 +79,7 @@ namespace ASSPR_1
                 return r;
             }
 
-            // 4. Допоміжний метод: Множення матриці на вектор
+            // Множення матриці на вектор
             public static double[] MultiplyMatrixByVector(double[,] matrix, double[] vector)
             {
                 int rows = matrix.GetLength(0);
@@ -101,14 +98,14 @@ namespace ASSPR_1
                 return result;
             }
 
-            // 5. Спосіб 1: Розв'язання СЛАР (X = A^(-1) * B)
+            // Спосіб 1: Розв'язання СЛАР (X = A^(-1) * B)
             public static double[] SolveMethod1(double[,] A, double[] B_vec)
             {
                 double[,] invA = Inverse(A);
                 return MultiplyMatrixByVector(invA, B_vec);
             }
 
-            // 6. Спосіб 2: Приведення до вигляду AX - B = 0
+            // Спосіб 2: Приведення до вигляду AX - B = 0
             public static double[] SolveMethod2(double[,] A, double[] B_vec)
             {
                 int n = A.GetLength(0);
@@ -129,7 +126,7 @@ namespace ASSPR_1
                 return x;
             }
 
-            // 7. Спосіб 3: Розв'язання СЛАР Методом Гаусса
+            // Спосіб 3: Розв'язання СЛАР Методом Гаусса
             public static double[] SolveMethod3(double[,] A, double[] B_vec)
             {
                 int n = A.GetLength(0);
@@ -141,7 +138,6 @@ namespace ASSPR_1
                     augmented[i, n] = B_vec[i];
                 }
 
-                // Прямий хід
                 for (int i = 0; i < n; i++)
                 {
                     if (Math.Abs(augmented[i, i]) < 1e-9)
@@ -171,7 +167,6 @@ namespace ASSPR_1
                     }
                 }
 
-                // Зворотний хід
                 double[] x = new double[n];
                 for (int i = n - 1; i >= 0; i--)
                 {
