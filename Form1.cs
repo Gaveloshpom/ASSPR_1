@@ -1,4 +1,5 @@
-﻿using System.Text;
+﻿using Microsoft.VisualBasic.Logging;
+using System.Text;
 using static ASSPR_1.Program;
 
 namespace ASSPR_1
@@ -83,10 +84,11 @@ namespace ASSPR_1
                 double[,] A = GetMatrixFromGrid(dgvMatrixA);
 
                 // 2. Обчислюємо за алгоритмом ЗЖВ
-                double[,] invA = Program.MathHelper.Inverse(A);
+                double[,] invA = MathHelper.Inverse(A, out string log);
 
                 // 3. Виводимо результат у таблицю для результатів
                 ShowMatrixInGrid(invA, dgvVectorB);
+                SaveLogToFile(log);
             }
             catch (Exception ex)
             {
@@ -127,12 +129,14 @@ namespace ASSPR_1
                 double[,] A = GetMatrixFromGrid(dgvMatrixA);
                 double[] B = GetVectorFromGrid(dgvVectorB);
 
-                double[] results = Program.MathHelper.SolveMethod2(A, B);
+                double[] results = MathHelper.SolveMethod2(A, B, out string log);
 
                 dgvResult.RowCount = results.Length;
                 dgvResult.ColumnCount = 1;
                 for (int i = 0; i < results.Length; i++)
-                    dgvResult.Rows[i].Cells[0].Value = System.Math.Round(results[i], 3);
+                    dgvResult.Rows[i].Cells[0].Value = Math.Round(results[i], 3);
+
+                SaveLogToFile(log);
             }
             catch (Exception ex) { MessageBox.Show(ex.Message); }
         }
@@ -143,9 +147,10 @@ namespace ASSPR_1
             {
                 double[,] A = GetMatrixFromGrid(dgvMatrixA);
 
-                double[,] invA = Program.MathHelper.Inverse(A);
+                double[,] invA = MathHelper.Inverse(A, out string log);
 
                 ShowMatrixInGrid(invA, dgvResult);
+                SaveLogToFile(log);
             }
             catch (Exception ex)
             {
@@ -159,9 +164,10 @@ namespace ASSPR_1
             {
                 double[,] A = GetMatrixFromGrid(dgvMatrixA);
 
-                int rank = Program.MathHelper.Rank(A);
+                int rank = MathHelper.Rank(A, out string log);
 
                 MessageBox.Show($"Ранг матриці А дорівнює: {rank}", "Результат");
+                SaveLogToFile(log);
             }
             catch (Exception ex)
             {
@@ -176,12 +182,14 @@ namespace ASSPR_1
                 double[,] A = GetMatrixFromGrid(dgvMatrixA);
                 double[] B = GetVectorFromGrid(dgvVectorB);
 
-                double[] X = Program.MathHelper.SolveMethod1(A, B);
+                double[] X = Program.MathHelper.SolveMethod1(A, B, out string log);
 
                 double[,] resultMatrix = new double[X.Length, 1];
                 for (int i = 0; i < X.Length; i++) resultMatrix[i, 0] = X[i];
 
                 ShowMatrixInGrid(resultMatrix, dgvResult);
+
+                SaveLogToFile(log);
             }
             catch (Exception ex) { MessageBox.Show("Помилка: " + ex.Message); }
         }
@@ -193,12 +201,13 @@ namespace ASSPR_1
                 double[,] A = GetMatrixFromGrid(dgvMatrixA);
                 double[] B = GetVectorFromGrid(dgvVectorB);
 
-                double[] X = Program.MathHelper.SolveMethod3(A, B);
+                double[] X = MathHelper.SolveMethod3(A, B, out string log);
 
                 double[,] resultMatrix = new double[X.Length, 1];
                 for (int i = 0; i < X.Length; i++) resultMatrix[i, 0] = X[i];
 
                 ShowMatrixInGrid(resultMatrix, dgvResult);
+                SaveLogToFile(log);
             }
             catch (Exception ex) { MessageBox.Show("Помилка: " + ex.Message); }
         }
@@ -312,15 +321,26 @@ namespace ASSPR_1
                     types.Add(type);
                 }
 
-                double[] X = MathHelper.SolveBigM(cObj, A, b, types, nVars, isMax, out double optZ);
+                double[] X = MathHelper.SolveBigM(cObj, A, b, types, nVars, isMax, out double optZ, out string log);
 
                 txtX.Text = MathHelper.FormatVector(X, nVars);
                 txtY.Text = MathHelper.FormatNum(optZ);
+                SaveLogToFile(log);
             }
             catch (Exception ex)
             {
                 MessageBox.Show("Помилка: " + ex.Message, "Помилка",
                     MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
+        }
+
+        private void SaveLogToFile(string logContent)
+        {
+            using (SaveFileDialog sfd = new SaveFileDialog())
+            {
+                sfd.FileName = "Protocol.txt";
+
+                File.WriteAllText(sfd.FileName, logContent, Encoding.UTF8);
             }
         }
     }

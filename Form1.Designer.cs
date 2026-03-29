@@ -283,7 +283,7 @@ namespace ASSPR_1
             tabControl1.Location = new Point(-3, 25);
             tabControl1.Name = "tabControl1";
             tabControl1.SelectedIndex = 0;
-            tabControl1.Size = new Size(800, 425);
+            tabControl1.Size = new Size(825, 479);
             tabControl1.TabIndex = 17;
             // 
             // Part_A
@@ -308,7 +308,7 @@ namespace ASSPR_1
             Part_A.Location = new Point(4, 24);
             Part_A.Name = "Part_A";
             Part_A.Padding = new Padding(3);
-            Part_A.Size = new Size(792, 397);
+            Part_A.Size = new Size(817, 451);
             Part_A.TabIndex = 0;
             Part_A.Text = "Part_A";
             // 
@@ -478,7 +478,7 @@ namespace ASSPR_1
             // 
             AutoScaleDimensions = new SizeF(7F, 15F);
             AutoScaleMode = AutoScaleMode.Font;
-            ClientSize = new Size(800, 450);
+            ClientSize = new Size(820, 501);
             Controls.Add(tabControl1);
             Name = "Form1";
             Text = "Form1";
