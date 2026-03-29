@@ -52,11 +52,34 @@ namespace ASSPR_1
             label4 = new Label();
             label5 = new Label();
             btnResize = new Button();
+            tabControl1 = new TabControl();
+            Part_A = new TabPage();
+            Part_B = new TabPage();
+            lstConstraints = new ListBox();
+            label10 = new Label();
+            txtY = new TextBox();
+            label9 = new Label();
+            txtX = new TextBox();
+            label8 = new Label();
+            label7 = new Label();
+            label6 = new Label();
+            nudVarCount = new NumericUpDown();
+            btnExample = new Button();
+            rbMax = new RadioButton();
+            rbMin = new RadioButton();
+            btnSolveLP = new Button();
+            txtZ = new TextBox();
+            dgvConstraints = new DataGridView();
             ((System.ComponentModel.ISupportInitialize)dgvMatrixA).BeginInit();
             ((System.ComponentModel.ISupportInitialize)dgvVectorB).BeginInit();
             ((System.ComponentModel.ISupportInitialize)dgvResult).BeginInit();
             ((System.ComponentModel.ISupportInitialize)numRows).BeginInit();
             ((System.ComponentModel.ISupportInitialize)numCols).BeginInit();
+            tabControl1.SuspendLayout();
+            Part_A.SuspendLayout();
+            Part_B.SuspendLayout();
+            ((System.ComponentModel.ISupportInitialize)nudVarCount).BeginInit();
+            ((System.ComponentModel.ISupportInitialize)dgvConstraints).BeginInit();
             SuspendLayout();
             // 
             // dgvMatrixA
@@ -218,7 +241,7 @@ namespace ASSPR_1
             // label3
             // 
             label3.AutoSize = true;
-            label3.Location = new Point(99, 9);
+            label3.Location = new Point(90, 8);
             label3.Name = "label3";
             label3.Size = new Size(67, 15);
             label3.TabIndex = 13;
@@ -228,7 +251,7 @@ namespace ASSPR_1
             // label4
             // 
             label4.AutoSize = true;
-            label4.Location = new Point(405, 9);
+            label4.Location = new Point(388, 8);
             label4.Name = "label4";
             label4.Size = new Size(66, 15);
             label4.TabIndex = 14;
@@ -253,28 +276,210 @@ namespace ASSPR_1
             btnResize.UseVisualStyleBackColor = true;
             btnResize.Click += btnResize_Click;
             // 
+            // tabControl1
+            // 
+            tabControl1.Controls.Add(Part_A);
+            tabControl1.Controls.Add(Part_B);
+            tabControl1.Location = new Point(-3, 25);
+            tabControl1.Name = "tabControl1";
+            tabControl1.SelectedIndex = 0;
+            tabControl1.Size = new Size(825, 479);
+            tabControl1.TabIndex = 17;
+            // 
+            // Part_A
+            // 
+            Part_A.Controls.Add(btnResize);
+            Part_A.Controls.Add(label5);
+            Part_A.Controls.Add(label4);
+            Part_A.Controls.Add(label3);
+            Part_A.Controls.Add(label2);
+            Part_A.Controls.Add(label1);
+            Part_A.Controls.Add(numCols);
+            Part_A.Controls.Add(numRows);
+            Part_A.Controls.Add(dgvResult);
+            Part_A.Controls.Add(BtnFill);
+            Part_A.Controls.Add(btnMethod3);
+            Part_A.Controls.Add(btnMethod2);
+            Part_A.Controls.Add(btnMethod1);
+            Part_A.Controls.Add(btnRank);
+            Part_A.Controls.Add(btnInverse);
+            Part_A.Controls.Add(dgvVectorB);
+            Part_A.Controls.Add(dgvMatrixA);
+            Part_A.Location = new Point(4, 24);
+            Part_A.Name = "Part_A";
+            Part_A.Padding = new Padding(3);
+            Part_A.Size = new Size(817, 451);
+            Part_A.TabIndex = 0;
+            Part_A.Text = "Part_A";
+            // 
+            // Part_B
+            // 
+            Part_B.Controls.Add(lstConstraints);
+            Part_B.Controls.Add(label10);
+            Part_B.Controls.Add(txtY);
+            Part_B.Controls.Add(label9);
+            Part_B.Controls.Add(txtX);
+            Part_B.Controls.Add(label8);
+            Part_B.Controls.Add(label7);
+            Part_B.Controls.Add(label6);
+            Part_B.Controls.Add(nudVarCount);
+            Part_B.Controls.Add(btnExample);
+            Part_B.Controls.Add(rbMax);
+            Part_B.Controls.Add(rbMin);
+            Part_B.Controls.Add(btnSolveLP);
+            Part_B.Controls.Add(txtZ);
+            Part_B.Controls.Add(dgvConstraints);
+            Part_B.Location = new Point(4, 24);
+            Part_B.Name = "Part_B";
+            Part_B.Padding = new Padding(3);
+            Part_B.Size = new Size(792, 397);
+            Part_B.TabIndex = 1;
+            Part_B.Text = "Part_B";
+            Part_B.UseVisualStyleBackColor = true;
+            // 
+            // lstConstraints
+            // 
+            lstConstraints.FormattingEnabled = true;
+            lstConstraints.Location = new Point(49, 280);
+            lstConstraints.Name = "lstConstraints";
+            lstConstraints.Size = new Size(430, 94);
+            lstConstraints.TabIndex = 14;
+            // 
+            // label10
+            // 
+            label10.AutoSize = true;
+            label10.Font = new Font("Segoe UI", 10F);
+            label10.Location = new Point(514, 275);
+            label10.Name = "label10";
+            label10.Size = new Size(31, 19);
+            label10.TabIndex = 13;
+            label10.Text = "Y =";
+            // 
+            // txtY
+            // 
+            txtY.Location = new Point(551, 275);
+            txtY.Name = "txtY";
+            txtY.Size = new Size(194, 23);
+            txtY.TabIndex = 12;
+            // 
+            // label9
+            // 
+            label9.AutoSize = true;
+            label9.Font = new Font("Segoe UI", 10F);
+            label9.Location = new Point(514, 246);
+            label9.Name = "label9";
+            label9.Size = new Size(31, 19);
+            label9.TabIndex = 11;
+            label9.Text = "X =";
+            // 
+            // txtX
+            // 
+            txtX.Location = new Point(551, 246);
+            txtX.Name = "txtX";
+            txtX.Size = new Size(194, 23);
+            txtX.TabIndex = 10;
+            // 
+            // label8
+            // 
+            label8.AutoSize = true;
+            label8.Font = new Font("Segoe UI", 10F);
+            label8.Location = new Point(514, 119);
+            label8.Name = "label8";
+            label8.Size = new Size(119, 19);
+            label8.TabIndex = 9;
+            label8.Text = "Кількість змінних:";
+            // 
+            // label7
+            // 
+            label7.AutoSize = true;
+            label7.Font = new Font("Segoe UI", 10F);
+            label7.Location = new Point(49, 95);
+            label7.Name = "label7";
+            label7.Size = new Size(88, 19);
+            label7.TabIndex = 8;
+            label7.Text = "Обмеження:";
+            // 
+            // label6
+            // 
+            label6.AutoSize = true;
+            label6.Font = new Font("Segoe UI", 10F);
+            label6.Location = new Point(49, 69);
+            label6.Name = "label6";
+            label6.Size = new Size(31, 19);
+            label6.TabIndex = 7;
+            label6.Text = "Z =";
+            // 
+            // nudVarCount
+            // 
+            nudVarCount.Location = new Point(639, 119);
+            nudVarCount.Name = "nudVarCount";
+            nudVarCount.Size = new Size(106, 23);
+            nudVarCount.TabIndex = 6;
+            // 
+            // btnExample
+            // 
+            btnExample.Location = new Point(635, 58);
+            btnExample.Name = "btnExample";
+            btnExample.Size = new Size(110, 41);
+            btnExample.TabIndex = 5;
+            btnExample.Text = "Приклад";
+            btnExample.UseVisualStyleBackColor = true;
+            btnExample.Click += btnExample_Click;
+            // 
+            // rbMax
+            // 
+            rbMax.AutoSize = true;
+            rbMax.Location = new Point(572, 69);
+            rbMax.Name = "rbMax";
+            rbMax.Size = new Size(47, 19);
+            rbMax.TabIndex = 4;
+            rbMax.TabStop = true;
+            rbMax.Text = "Max";
+            rbMax.UseVisualStyleBackColor = true;
+            // 
+            // rbMin
+            // 
+            rbMin.AutoSize = true;
+            rbMin.Location = new Point(514, 69);
+            rbMin.Name = "rbMin";
+            rbMin.Size = new Size(46, 19);
+            rbMin.TabIndex = 3;
+            rbMin.TabStop = true;
+            rbMin.Text = "Min";
+            rbMin.UseVisualStyleBackColor = true;
+            // 
+            // btnSolveLP
+            // 
+            btnSolveLP.Location = new Point(514, 160);
+            btnSolveLP.Name = "btnSolveLP";
+            btnSolveLP.Size = new Size(231, 57);
+            btnSolveLP.TabIndex = 2;
+            btnSolveLP.Text = "Знайти оптимальний розв'язок";
+            btnSolveLP.UseVisualStyleBackColor = true;
+            btnSolveLP.Click += btnSolveLP_Click;
+            // 
+            // txtZ
+            // 
+            txtZ.Location = new Point(79, 66);
+            txtZ.Name = "txtZ";
+            txtZ.Size = new Size(210, 23);
+            txtZ.TabIndex = 1;
+            // 
+            // dgvConstraints
+            // 
+            dgvConstraints.ColumnHeadersHeightSizeMode = DataGridViewColumnHeadersHeightSizeMode.AutoSize;
+            dgvConstraints.Location = new Point(49, 117);
+            dgvConstraints.Name = "dgvConstraints";
+            dgvConstraints.RowHeadersWidth = 10;
+            dgvConstraints.Size = new Size(430, 157);
+            dgvConstraints.TabIndex = 0;
+            // 
             // Form1
             // 
             AutoScaleDimensions = new SizeF(7F, 15F);
             AutoScaleMode = AutoScaleMode.Font;
-            ClientSize = new Size(800, 450);
-            Controls.Add(btnResize);
-            Controls.Add(label5);
-            Controls.Add(label4);
-            Controls.Add(label3);
-            Controls.Add(label2);
-            Controls.Add(label1);
-            Controls.Add(numCols);
-            Controls.Add(numRows);
-            Controls.Add(dgvResult);
-            Controls.Add(BtnFill);
-            Controls.Add(btnMethod3);
-            Controls.Add(btnMethod2);
-            Controls.Add(btnMethod1);
-            Controls.Add(btnRank);
-            Controls.Add(btnInverse);
-            Controls.Add(dgvVectorB);
-            Controls.Add(dgvMatrixA);
+            ClientSize = new Size(820, 501);
+            Controls.Add(tabControl1);
             Name = "Form1";
             Text = "Form1";
             Load += Form1_Load;
@@ -283,8 +488,14 @@ namespace ASSPR_1
             ((System.ComponentModel.ISupportInitialize)dgvResult).EndInit();
             ((System.ComponentModel.ISupportInitialize)numRows).EndInit();
             ((System.ComponentModel.ISupportInitialize)numCols).EndInit();
+            tabControl1.ResumeLayout(false);
+            Part_A.ResumeLayout(false);
+            Part_A.PerformLayout();
+            Part_B.ResumeLayout(false);
+            Part_B.PerformLayout();
+            ((System.ComponentModel.ISupportInitialize)nudVarCount).EndInit();
+            ((System.ComponentModel.ISupportInitialize)dgvConstraints).EndInit();
             ResumeLayout(false);
-            PerformLayout();
         }
 
         #endregion
@@ -311,5 +522,23 @@ namespace ASSPR_1
         private Label label4;
         private Label label5;
         private Button btnResize;
+        private TabControl tabControl1;
+        private TabPage Part_A;
+        private TabPage Part_B;
+        private TextBox txtZ;
+        private DataGridView dgvConstraints;
+        private RadioButton rbMax;
+        private RadioButton rbMin;
+        private Button btnSolveLP;
+        private Button btnExample;
+        private NumericUpDown nudVarCount;
+        private Label label7;
+        private Label label6;
+        private Label label10;
+        private TextBox txtY;
+        private Label label9;
+        private TextBox txtX;
+        private Label label8;
+        private ListBox lstConstraints;
     }
 }

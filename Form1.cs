@@ -1,4 +1,5 @@
-﻿using System.Text;
+﻿using Microsoft.VisualBasic.Logging;
+using System.Text;
 using static ASSPR_1.Program;
 
 namespace ASSPR_1
@@ -39,7 +40,7 @@ namespace ASSPR_1
                 for (int j = 0; j < m; j++)
                 {
                     // Округлимо до 3 знаків для краси
-                    grid.Rows[i].Cells[j].Value = Math.Round(matrix[i, j], 3);
+                    grid.Rows[i].Cells[j].Value = System.Math.Round(matrix[i, j], 3);
                 }
             }
         }
@@ -83,10 +84,11 @@ namespace ASSPR_1
                 double[,] A = GetMatrixFromGrid(dgvMatrixA);
 
                 // 2. Обчислюємо за алгоритмом ЗЖВ
-                double[,] invA = MatrixMath.Inverse(A);
+                double[,] invA = MathHelper.Inverse(A, out string log);
 
                 // 3. Виводимо результат у таблицю для результатів
                 ShowMatrixInGrid(invA, dgvVectorB);
+                SaveLogToFile(log);
             }
             catch (Exception ex)
             {
@@ -127,12 +129,14 @@ namespace ASSPR_1
                 double[,] A = GetMatrixFromGrid(dgvMatrixA);
                 double[] B = GetVectorFromGrid(dgvVectorB);
 
-                double[] results = MatrixMath.SolveMethod2(A, B);
+                double[] results = MathHelper.SolveMethod2(A, B, out string log);
 
                 dgvResult.RowCount = results.Length;
                 dgvResult.ColumnCount = 1;
                 for (int i = 0; i < results.Length; i++)
                     dgvResult.Rows[i].Cells[0].Value = Math.Round(results[i], 3);
+
+                SaveLogToFile(log);
             }
             catch (Exception ex) { MessageBox.Show(ex.Message); }
         }
@@ -143,9 +147,10 @@ namespace ASSPR_1
             {
                 double[,] A = GetMatrixFromGrid(dgvMatrixA);
 
-                double[,] invA = MatrixMath.Inverse(A);
+                double[,] invA = MathHelper.Inverse(A, out string log);
 
                 ShowMatrixInGrid(invA, dgvResult);
+                SaveLogToFile(log);
             }
             catch (Exception ex)
             {
@@ -159,9 +164,10 @@ namespace ASSPR_1
             {
                 double[,] A = GetMatrixFromGrid(dgvMatrixA);
 
-                int rank = MatrixMath.Rank(A);
+                int rank = MathHelper.Rank(A, out string log);
 
                 MessageBox.Show($"Ранг матриці А дорівнює: {rank}", "Результат");
+                SaveLogToFile(log);
             }
             catch (Exception ex)
             {
@@ -176,12 +182,14 @@ namespace ASSPR_1
                 double[,] A = GetMatrixFromGrid(dgvMatrixA);
                 double[] B = GetVectorFromGrid(dgvVectorB);
 
-                double[] X = MatrixMath.SolveMethod1(A, B);
+                double[] X = Program.MathHelper.SolveMethod1(A, B, out string log);
 
                 double[,] resultMatrix = new double[X.Length, 1];
                 for (int i = 0; i < X.Length; i++) resultMatrix[i, 0] = X[i];
 
                 ShowMatrixInGrid(resultMatrix, dgvResult);
+
+                SaveLogToFile(log);
             }
             catch (Exception ex) { MessageBox.Show("Помилка: " + ex.Message); }
         }
@@ -193,12 +201,13 @@ namespace ASSPR_1
                 double[,] A = GetMatrixFromGrid(dgvMatrixA);
                 double[] B = GetVectorFromGrid(dgvVectorB);
 
-                double[] X = MatrixMath.SolveMethod3(A, B);
+                double[] X = MathHelper.SolveMethod3(A, B, out string log);
 
                 double[,] resultMatrix = new double[X.Length, 1];
                 for (int i = 0; i < X.Length; i++) resultMatrix[i, 0] = X[i];
 
                 ShowMatrixInGrid(resultMatrix, dgvResult);
+                SaveLogToFile(log);
             }
             catch (Exception ex) { MessageBox.Show("Помилка: " + ex.Message); }
         }
@@ -231,6 +240,107 @@ namespace ASSPR_1
             {
                 dgvMatrixA.Columns[j].HeaderText = $"x{j + 1}";
                 dgvMatrixA.Columns[j].Width = 50;
+            }
+        }
+
+        private void domainUpDown1_SelectedItemChanged(object sender, EventArgs e)
+        {
+
+        }
+        // Допоміжний метод для налаштування таблиці (викликається кнопкою "Приклад")
+        private void InitLPGrid(int varsCount, int constrCount)
+        {
+            dgvConstraints.AllowUserToAddRows = false;
+            dgvConstraints.RowCount = constrCount + 1; // +1 для рядка Z
+            dgvConstraints.ColumnCount = varsCount + 1; // +1 для стовпця вільних членів (B)
+
+            // Називаємо колонки x1, x2... і B
+            for (int j = 0; j < varsCount; j++) dgvConstraints.Columns[j].HeaderText = $"x{j + 1}";
+            dgvConstraints.Columns[varsCount].HeaderText = "B";
+
+            // Називаємо рядки
+            for (int i = 0; i < constrCount; i++) dgvConstraints.Rows[i].HeaderCell.Value = $"О{i + 1}";
+            dgvConstraints.Rows[constrCount].HeaderCell.Value = "Z";
+
+            dgvConstraints.AutoResizeRowHeadersWidth(DataGridViewRowHeadersWidthSizeMode.AutoSizeToAllHeaders);
+        }
+
+        // Обробник для кнопки "Приклад"
+        private void btnExample_Click(object sender, EventArgs e)
+        {
+            nudVarCount.Value = 4;
+            txtZ.Text = "x1+2x2-x3-x4";
+            rbMax.Checked = true;
+
+            lstConstraints.Items.Clear();
+            lstConstraints.Items.Add("x1+x2-x3-2x4<=6");
+            lstConstraints.Items.Add("x1+x2+x3-x4>=5");
+            lstConstraints.Items.Add("2x1-x2+3x3+4x4<=10");
+
+            txtX.Text = "";
+            txtY.Text = "";
+
+            //nudVarCount.Value = 4;
+            //txtZ.Text = "-2x1+3x2-3x4";
+            //rbMax.Checked = false;
+
+            //lstConstraints.Items.Clear();
+            //lstConstraints.Items.Add("x1+x2-x3-2x4<=6");
+            //lstConstraints.Items.Add("x1+x2+x3-x4>=5");
+            //lstConstraints.Items.Add("2x1-x2+3x3+4x4<=10");
+
+            //txtX.Text = "";
+            //txtY.Text = "";
+        }
+
+        // Обробник для кнопки "Знайти оптимальний розв'язок"
+        private void btnSolveLP_Click(object sender, EventArgs e)
+        {
+            try
+            {
+                int nVars = (int)nudVarCount.Value;
+                bool isMax = rbMax.Checked;
+
+                if (string.IsNullOrWhiteSpace(txtZ.Text))
+                    throw new Exception("Введіть цільову функцію Z.");
+                if (lstConstraints.Items.Count == 0)
+                    throw new Exception("Введіть хоча б одне обмеження.");
+
+                double[] cObj = MathHelper.ParseObjective(txtZ.Text, nVars);
+
+                var A = new List<double[]>();
+                var b = new List<double>();
+                var types = new List<string>();
+
+                foreach (var item in lstConstraints.Items)
+                {
+                    MathHelper.ParseConstraint(item.ToString(), nVars,
+                        out double[] row, out double rhs, out string type);
+                    A.Add(row);
+                    b.Add(rhs);
+                    types.Add(type);
+                }
+
+                double[] X = MathHelper.SolveBigM(cObj, A, b, types, nVars, isMax, out double optZ, out string log);
+
+                txtX.Text = MathHelper.FormatVector(X, nVars);
+                txtY.Text = MathHelper.FormatNum(optZ);
+                SaveLogToFile(log);
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show("Помилка: " + ex.Message, "Помилка",
+                    MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
+        }
+
+        private void SaveLogToFile(string logContent)
+        {
+            using (SaveFileDialog sfd = new SaveFileDialog())
+            {
+                sfd.FileName = "Protocol.txt";
+
+                File.WriteAllText(sfd.FileName, logContent, Encoding.UTF8);
             }
         }
     }
