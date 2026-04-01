@@ -69,6 +69,23 @@ namespace ASSPR_1
             rbMin = new RadioButton();
             btnSolveLP = new Button();
             txtZ = new TextBox();
+            tabPage1 = new TabPage();
+            txtFreeVars2 = new TextBox();
+            label16 = new Label();
+            lstConstraints2 = new ListBox();
+            label11 = new Label();
+            txtY2 = new TextBox();
+            label12 = new Label();
+            txtX2 = new TextBox();
+            label13 = new Label();
+            label14 = new Label();
+            label15 = new Label();
+            nudVarCount2 = new NumericUpDown();
+            button1 = new Button();
+            rbMax2 = new RadioButton();
+            radioButton2 = new RadioButton();
+            btnSolveLP2 = new Button();
+            txtZ2 = new TextBox();
             ((System.ComponentModel.ISupportInitialize)dgvMatrixA).BeginInit();
             ((System.ComponentModel.ISupportInitialize)dgvVectorB).BeginInit();
             ((System.ComponentModel.ISupportInitialize)dgvResult).BeginInit();
@@ -78,6 +95,8 @@ namespace ASSPR_1
             Part_A.SuspendLayout();
             Part_B.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)nudVarCount).BeginInit();
+            tabPage1.SuspendLayout();
+            ((System.ComponentModel.ISupportInitialize)nudVarCount2).BeginInit();
             SuspendLayout();
             // 
             // dgvMatrixA
@@ -275,6 +294,7 @@ namespace ASSPR_1
             // 
             tabControl1.Controls.Add(Part_A);
             tabControl1.Controls.Add(Part_B);
+            tabControl1.Controls.Add(tabPage1);
             tabControl1.Location = new Point(-3, 25);
             tabControl1.Name = "tabControl1";
             tabControl1.SelectedIndex = 0;
@@ -459,6 +479,176 @@ namespace ASSPR_1
             txtZ.Size = new Size(210, 23);
             txtZ.TabIndex = 1;
             // 
+            // tabPage1
+            // 
+            tabPage1.Controls.Add(txtFreeVars2);
+            tabPage1.Controls.Add(label16);
+            tabPage1.Controls.Add(lstConstraints2);
+            tabPage1.Controls.Add(label11);
+            tabPage1.Controls.Add(txtY2);
+            tabPage1.Controls.Add(label12);
+            tabPage1.Controls.Add(txtX2);
+            tabPage1.Controls.Add(label13);
+            tabPage1.Controls.Add(label14);
+            tabPage1.Controls.Add(label15);
+            tabPage1.Controls.Add(nudVarCount2);
+            tabPage1.Controls.Add(button1);
+            tabPage1.Controls.Add(rbMax2);
+            tabPage1.Controls.Add(radioButton2);
+            tabPage1.Controls.Add(btnSolveLP2);
+            tabPage1.Controls.Add(txtZ2);
+            tabPage1.Location = new Point(4, 24);
+            tabPage1.Name = "tabPage1";
+            tabPage1.Size = new Size(817, 451);
+            tabPage1.TabIndex = 2;
+            tabPage1.Text = "Part_C";
+            tabPage1.UseVisualStyleBackColor = true;
+            // 
+            // txtFreeVars2
+            // 
+            txtFreeVars2.Location = new Point(60, 278);
+            txtFreeVars2.Name = "txtFreeVars2";
+            txtFreeVars2.Size = new Size(240, 23);
+            txtFreeVars2.TabIndex = 30;
+            // 
+            // label16
+            // 
+            label16.AutoSize = true;
+            label16.Font = new Font("Segoe UI", 10F);
+            label16.Location = new Point(60, 256);
+            label16.Name = "label16";
+            label16.Size = new Size(90, 19);
+            label16.TabIndex = 29;
+            label16.Text = "Вільні змінні:";
+            // 
+            // lstConstraints2
+            // 
+            lstConstraints2.FormattingEnabled = true;
+            lstConstraints2.Location = new Point(60, 150);
+            lstConstraints2.Name = "lstConstraints2";
+            lstConstraints2.Size = new Size(318, 94);
+            lstConstraints2.TabIndex = 28;
+            // 
+            // label11
+            // 
+            label11.AutoSize = true;
+            label11.Font = new Font("Segoe UI", 10F);
+            label11.Location = new Point(437, 302);
+            label11.Name = "label11";
+            label11.Size = new Size(31, 19);
+            label11.TabIndex = 27;
+            label11.Text = "Z =";
+            // 
+            // txtY2
+            // 
+            txtY2.Location = new Point(474, 302);
+            txtY2.Name = "txtY2";
+            txtY2.Size = new Size(194, 23);
+            txtY2.TabIndex = 26;
+            // 
+            // label12
+            // 
+            label12.AutoSize = true;
+            label12.Font = new Font("Segoe UI", 10F);
+            label12.Location = new Point(437, 273);
+            label12.Name = "label12";
+            label12.Size = new Size(31, 19);
+            label12.TabIndex = 25;
+            label12.Text = "X =";
+            // 
+            // txtX2
+            // 
+            txtX2.Location = new Point(474, 273);
+            txtX2.Name = "txtX2";
+            txtX2.Size = new Size(194, 23);
+            txtX2.TabIndex = 24;
+            // 
+            // label13
+            // 
+            label13.AutoSize = true;
+            label13.Font = new Font("Segoe UI", 10F);
+            label13.Location = new Point(437, 146);
+            label13.Name = "label13";
+            label13.Size = new Size(119, 19);
+            label13.TabIndex = 23;
+            label13.Text = "Кількість змінних:";
+            // 
+            // label14
+            // 
+            label14.AutoSize = true;
+            label14.Font = new Font("Segoe UI", 10F);
+            label14.Location = new Point(60, 122);
+            label14.Name = "label14";
+            label14.Size = new Size(88, 19);
+            label14.TabIndex = 22;
+            label14.Text = "Обмеження:";
+            // 
+            // label15
+            // 
+            label15.AutoSize = true;
+            label15.Font = new Font("Segoe UI", 10F);
+            label15.Location = new Point(60, 96);
+            label15.Name = "label15";
+            label15.Size = new Size(31, 19);
+            label15.TabIndex = 21;
+            label15.Text = "Z =";
+            // 
+            // nudVarCount2
+            // 
+            nudVarCount2.Location = new Point(562, 146);
+            nudVarCount2.Name = "nudVarCount2";
+            nudVarCount2.Size = new Size(106, 23);
+            nudVarCount2.TabIndex = 20;
+            // 
+            // button1
+            // 
+            button1.Location = new Point(558, 85);
+            button1.Name = "button1";
+            button1.Size = new Size(110, 41);
+            button1.TabIndex = 19;
+            button1.Text = "Приклад";
+            button1.UseVisualStyleBackColor = true;
+            button1.Click += btnExample2_Click;
+            // 
+            // rbMax2
+            // 
+            rbMax2.AutoSize = true;
+            rbMax2.Location = new Point(495, 96);
+            rbMax2.Name = "rbMax2";
+            rbMax2.Size = new Size(47, 19);
+            rbMax2.TabIndex = 18;
+            rbMax2.TabStop = true;
+            rbMax2.Text = "Max";
+            rbMax2.UseVisualStyleBackColor = true;
+            // 
+            // radioButton2
+            // 
+            radioButton2.AutoSize = true;
+            radioButton2.Location = new Point(437, 96);
+            radioButton2.Name = "radioButton2";
+            radioButton2.Size = new Size(46, 19);
+            radioButton2.TabIndex = 17;
+            radioButton2.TabStop = true;
+            radioButton2.Text = "Min";
+            radioButton2.UseVisualStyleBackColor = true;
+            // 
+            // btnSolveLP2
+            // 
+            btnSolveLP2.Location = new Point(437, 187);
+            btnSolveLP2.Name = "btnSolveLP2";
+            btnSolveLP2.Size = new Size(231, 57);
+            btnSolveLP2.TabIndex = 16;
+            btnSolveLP2.Text = "Знайти оптимальний розв'язок";
+            btnSolveLP2.UseVisualStyleBackColor = true;
+            btnSolveLP2.Click += btnSolveLP2_Click;
+            // 
+            // txtZ2
+            // 
+            txtZ2.Location = new Point(90, 93);
+            txtZ2.Name = "txtZ2";
+            txtZ2.Size = new Size(210, 23);
+            txtZ2.TabIndex = 15;
+            // 
             // Form1
             // 
             AutoScaleDimensions = new SizeF(7F, 15F);
@@ -479,6 +669,9 @@ namespace ASSPR_1
             Part_B.ResumeLayout(false);
             Part_B.PerformLayout();
             ((System.ComponentModel.ISupportInitialize)nudVarCount).EndInit();
+            tabPage1.ResumeLayout(false);
+            tabPage1.PerformLayout();
+            ((System.ComponentModel.ISupportInitialize)nudVarCount2).EndInit();
             ResumeLayout(false);
         }
 
@@ -523,5 +716,22 @@ namespace ASSPR_1
         private TextBox txtX;
         private Label label8;
         private ListBox lstConstraints;
+        private TabPage tabPage1;
+        private TextBox txtFreeVars2;
+        private Label label16;
+        private ListBox lstConstraints2;
+        private Label label11;
+        private TextBox txtY2;
+        private Label label12;
+        private TextBox txtX2;
+        private Label label13;
+        private Label label14;
+        private Label label15;
+        private NumericUpDown nudVarCount2;
+        private Button button1;
+        private RadioButton rbMax2;
+        private RadioButton radioButton2;
+        private Button btnSolveLP2;
+        private TextBox txtZ2;
     }
 }

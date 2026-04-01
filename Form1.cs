@@ -285,5 +285,83 @@ namespace ASSPR_1
                 File.WriteAllText(sfd.FileName, logContent, Encoding.UTF8);
             }
         }
+
+        private void btnSolveLP2_Click(object sender, EventArgs e)
+        {
+            try
+            {
+                int nVars = (int)nudVarCount2.Value;
+                bool isMax = rbMax2.Checked;
+
+                if (string.IsNullOrWhiteSpace(txtZ2.Text))
+                    throw new Exception("Введіть цільову функцію Z.");
+                if (lstConstraints2.Items.Count == 0)
+                    throw new Exception("Введіть хоча б одне обмеження.");
+
+                // 1. Парсимо цільову функцію
+                double[] cObj = MathHelper.ParseObjective(txtZ2.Text, nVars);
+
+                // 2. Парсимо обмеження
+                var A = new List<double[]>();
+                var b = new List<double>();
+                var types = new List<string>();
+
+                foreach (var item in lstConstraints2.Items)
+                {
+                    // Використовуємо покращений парсер, який ви вже маєте
+                    MathHelper.ParseConstraint(item.ToString(), nVars,
+                        out double[] row, out double rhs, out string type);
+                    A.Add(row);
+                    b.Add(rhs);
+                    types.Add(type);
+                }
+
+                // 3. Викликаємо наш новий метод розв'язання через МЖВ
+                double[] X = MathHelper.SolveMixedMJE(cObj, A, b, types, nVars, isMax,
+                    out double optZ, out string log, out string freeVars);
+
+                // 4. Виводимо результати
+                txtX2.Text = MathHelper.FormatVector(X, nVars);
+                txtY2.Text = MathHelper.FormatNum(optZ);
+                txtFreeVars2.Text = freeVars;
+                // Виведення вільних змінних (ті, що залишилися в заголовках стовпців у фінальній таблиці)
+                // Для простоти, в даній версії ми виводимо основні змінні, які дорівнюють 0
+                // Але ви можете додати логіку передачі списку вільних змінних з SolveMixedMJE
+
+                SaveLogToFile(log);
+                //MessageBox.Show("Оптимальний розв'язок знайдено! Протокол збережено.", "Успіх");
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show("Помилка: " + ex.Message, "Помилка",
+                    MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
+
+        }
+
+        private void btnExample2_Click(object sender, EventArgs e)
+        {
+            // Приклад з Рисунку 3.3
+            //nudVarCount2.Value = 4;
+            //txtZ2.Text = "10x1-1x2-42x3-52x4";
+            //rbMax2.Checked = true;
+
+            //lstConstraints2.Items.Clear();
+            //lstConstraints2.Items.Add("-2x1+x2+x3+3x4=2");
+            //lstConstraints2.Items.Add("-3x1+2x2-3x3=7");
+            //lstConstraints2.Items.Add("-3x1+x2+4x3+x4<=1");
+            //lstConstraints2.Items.Add("3x1-2x2+2x3-2x4<=-9");
+
+            // Приклад з Рисунку 3.4
+            nudVarCount2.Value = 2;
+            txtZ2.Text = "-3x1+6x2";
+            rbMax2.Checked = true;
+            lstConstraints2.Items.Clear();
+            lstConstraints2.Items.Add("x1+2x2+1>=0");
+            lstConstraints2.Items.Add("2x1+x2-4>=0");
+            lstConstraints2.Items.Add("x1-x2+1>=0");
+            lstConstraints2.Items.Add("x1-4x2+13>=0");
+            lstConstraints2.Items.Add("-4x1+x2+23>=0");
+        }
     }
 }

@@ -356,24 +356,49 @@ namespace ASSPR_1
                 return c;
             }
 
-            public static void ParseConstraint(string raw, int nVars,
-                out double[] row, out double rhs, out string type)
+            public static void ParseConstraint(string raw, int nVars, out double[] row, out double rhs, out string type)
             {
-                row = new double[nVars]; rhs = 0; type = "<=";
-                string s = raw.Replace(" ", "");
-                string lhs;
+                row = new double[nVars];
+                rhs = 0;
+                type = "<=";
 
-                if (s.Contains("<=")) { var p = s.Split(new[] { "<=" }, 2, StringSplitOptions.None); lhs = p[0]; rhs = ParseNum(p[1]); type = "<="; }
-                else if (s.Contains(">=")) { var p = s.Split(new[] { ">=" }, 2, StringSplitOptions.None); lhs = p[0]; rhs = ParseNum(p[1]); type = ">="; }
-                else if (s.Contains("=")) { var p = s.Split(new[] { "=" }, 2, StringSplitOptions.None); lhs = p[0]; rhs = ParseNum(p[1]); type = "="; }
-                else throw new Exception($"Не вдалося розпізнати обмеження: «{raw}»");
+                // Визначаємо тип обмеження
+                if (raw.Contains("<=")) type = "<=";
+                else if (raw.Contains(">=")) type = ">=";
+                else if (raw.Contains("=")) type = "=";
+                else throw new Exception($"Невідомий оператор у: {raw}");
 
-                if (!lhs.StartsWith("-")) lhs = "+" + lhs;
-                foreach (Match m in Regex.Matches(lhs, @"([+-]\d*\.?\d*)[xX](\d+)"))
+                string[] parts = raw.Split(new[] { "<=", ">=", "=" }, StringSplitOptions.None);
+                string lhs = parts[0].Replace(" ", "");
+                double originalRhs = ParseNum(parts[1]);
+
+                // Регулярний вираз для пошуку x_i (коефіцієнт та індекс)
+                // Шукає групи: (коефіцієнт)x(індекс)
+                var xMatches = Regex.Matches(lhs, @"([+-]?\d*\.?\d*)x(\d+)");
+                double constantOnLhs = 0;
+
+                // Видаляємо знайдені змінні з рядка, щоб знайти чисті константи
+                string remainingLhs = lhs;
+                foreach (Match m in xMatches)
                 {
                     int idx = int.Parse(m.Groups[2].Value) - 1;
-                    if (idx < nVars) row[idx] = ParseCoef(m.Groups[1].Value);
+                    if (idx < nVars)
+                    {
+                        row[idx] += ParseCoef(m.Groups[1].Value);
+                    }
+                    // Замінюємо знайдену частину на пусте місце, щоб вона не заважала
+                    remainingLhs = remainingLhs.Replace(m.Value, "");
                 }
+
+                // Шукаємо константи, що залишилися на LHS (наприклад, "+1" у "x1+2x2+1>=0")
+                var constMatches = Regex.Matches(remainingLhs, @"[+-]?\d+\.?\d*");
+                foreach (Match m in constMatches)
+                {
+                    constantOnLhs += ParseNum(m.Value);
+                }
+
+                // Фінальний RHS = Те, що було праворуч - Те, що перенесли зліва
+                rhs = originalRhs - constantOnLhs;
             }
 
             public static double ParseCoef(string s)
@@ -637,6 +662,344 @@ namespace ASSPR_1
                 return X;
             }
 
+
+            //Part_C
+
+            // Головний метод для розв'язання задачі зі змішаними обмеженнями через МЖВ
+            public static double[] SolveMixedMJE(
+                double[] cObj, 
+                List<double[]> A, 
+                List<double> b, 
+                List<string> types, 
+                int nVars, 
+                bool isMax, 
+                out double optZ, 
+                out string log, 
+                out string freeVars)
+            {
+                StringBuilder sb = new StringBuilder();
+                sb.AppendLine("=== Розв'язання задачі ЗЛП методом МЖВ ===");
+
+                int nC = A.Count;
+                int cols = nVars + 1;
+                int rows = nC + 1;
+                int freeCol = cols - 1;
+                int zRow = rows - 1;
+
+                double[,] T = new double[rows, cols];
+                List<string> rowHeaders = new List<string>();
+                List<string> colHeaders = new List<string>();
+
+                for (int j = 0; j < nVars; j++) colHeaders.Add($"x{j + 1}");
+                colHeaders.Add("1");
+
+                // Ініціалізація початкової симплекс-таблиці
+                for (int i = 0; i < nC; i++)
+                {
+                    if (types[i] == "<=")
+                    {
+                        for (int j = 0; j < nVars; j++) T[i, j] = A[i][j];
+                        T[i, freeCol] = b[i];
+                        rowHeaders.Add($"y{i + 1}");
+                    }
+                    else if (types[i] == ">=")
+                    {
+                        for (int j = 0; j < nVars; j++) T[i, j] = -A[i][j];
+                        T[i, freeCol] = -b[i];
+                        rowHeaders.Add($"y{i + 1}");
+                    }
+                    else // "="
+                    {
+                        for (int j = 0; j < nVars; j++) T[i, j] = A[i][j];
+                        T[i, freeCol] = b[i];
+                        // У 0-рядках вільний член має бути >= 0
+                        if (T[i, freeCol] < 0)
+                        {
+                            for (int j = 0; j <= nVars; j++) T[i, j] = -T[i, j];
+                        }
+                        rowHeaders.Add("0");
+                    }
+                }
+
+                // Рядок цільової функції Z
+                for (int j = 0; j < nVars; j++) T[zRow, j] = isMax ? -cObj[j] : cObj[j];
+                T[zRow, freeCol] = 0;
+                rowHeaders.Add("Z");
+
+                sb.AppendLine("\nПочаткова симплекс-таблиця:");
+                LogTableauMJE(sb, T, rowHeaders, colHeaders);
+
+                // --- ЕТАП 1: Видалення 0-рядків (Рисунок 3.2) ---
+                sb.AppendLine("\n--- Етап 1: Видалення 0-рядків ---");
+                while (rowHeaders.Contains("0"))
+                {
+                    int r0 = rowHeaders.IndexOf("0");
+
+                    int s = -1;
+                    for (int j = 0; j < colHeaders.Count - 1; j++)
+                    {
+                        if (T[r0, j] > 1e-9) { s = j; break; }
+                    }
+
+                    if (s == -1) throw new Exception("Система обмежень є суперечливою (немає додатного елемента в 0-рядку).");
+
+                    int pivot_r = -1;
+                    double minRatio = double.MaxValue;
+                    for (int i = 0; i < rowHeaders.Count - 1; i++) // Без рядка Z
+                    {
+                        if (T[i, s] > 1e-9)
+                        {
+                            double ratio = T[i, freeCol] / T[i, s];
+                            if (ratio < minRatio) { minRatio = ratio; pivot_r = i; }
+                        }
+                    }
+
+                    sb.AppendLine($"Розв'язувальний елемент: [{rowHeaders[pivot_r]}, {colHeaders[s]}] = {T[pivot_r, s]:F3}");
+                    T = MjeStep(T, pivot_r, s, T.GetLength(0), T.GetLength(1));
+
+                    string temp = rowHeaders[pivot_r];
+                    rowHeaders[pivot_r] = colHeaders[s].Replace("-", ""); // Прибираємо мінус, якщо був
+                    colHeaders[s] = temp;
+
+                    if (colHeaders[s] == "0")
+                    {
+                        T = DeleteColumn(T, s);
+                        colHeaders.RemoveAt(s);
+                        freeCol--; // Кількість стовпців зменшилась
+                    }
+                    LogTableauMJE(sb, T, rowHeaders, colHeaders);
+                }
+
+                // --- ЕТАП 2: Пошук опорного розв'язку ---
+                sb.AppendLine("\n--- Етап 2: Пошук опорного розв'язку ---");
+                while (true)
+                {
+                    int r = -1;
+                    double minFree = -1e-9;
+                    for (int i = 0; i < rowHeaders.Count - 1; i++)
+                    {
+                        if (T[i, freeCol] < minFree) { minFree = T[i, freeCol]; r = i; }
+                    }
+
+                    if (r == -1) break; // Опорний розв'язок знайдено
+
+                    int s = -1;
+                    for (int j = 0; j < colHeaders.Count - 1; j++)
+                    {
+                        if (T[r, j] < -1e-9) { s = j; break; }
+                    }
+
+                    if (s == -1) throw new Exception("Система не має опорних розв'язків.");
+
+                    // Для пошуку опорного розв'язку робимо звичайний крок МЖВ
+                    sb.AppendLine($"Розв'язувальний елемент: [{rowHeaders[r]}, {colHeaders[s]}] = {T[r, s]:F3}");
+                    T = MjeStep(T, r, s, T.GetLength(0), T.GetLength(1));
+
+                    string temp = rowHeaders[r];
+                    rowHeaders[r] = colHeaders[s];
+                    colHeaders[s] = temp;
+
+                    LogTableauMJE(sb, T, rowHeaders, colHeaders);
+                }
+
+                // --- ЕТАП 3: Пошук оптимального розв'язку ---
+                sb.AppendLine("\n--- Етап 3: Пошук оптимального розв'язку ---");
+                while (true)
+                {
+                    int s = -1;
+                    double maxVal = -1e-9;
+                    for (int j = 0; j < colHeaders.Count - 1; j++)
+                    {
+                        if (T[zRow, j] < maxVal) { maxVal = T[zRow, j]; s = j; }
+                    }
+
+                    if (s == -1) break; // Оптимум знайдено!
+
+                    int pivot_r = -1;
+                    double minRatio = double.MaxValue;
+                    for (int i = 0; i < rowHeaders.Count - 1; i++)
+                    {
+                        if (T[i, s] > 1e-9)
+                        {
+                            double ratio = T[i, freeCol] / T[i, s];
+                            if (ratio < minRatio) { minRatio = ratio; pivot_r = i; }
+                        }
+                    }
+
+                    if (pivot_r == -1) throw new Exception("Функція не обмежена.");
+
+                    sb.AppendLine($"Розв'язувальний елемент: [{rowHeaders[pivot_r]}, {colHeaders[s]}] = {T[pivot_r, s]:F3}");
+                    T = MjeStep(T, pivot_r, s, T.GetLength(0), T.GetLength(1));
+
+                    string temp = rowHeaders[pivot_r];
+                    rowHeaders[pivot_r] = colHeaders[s];
+                    colHeaders[s] = temp;
+
+                    LogTableauMJE(sb, T, rowHeaders, colHeaders);
+                }
+
+                var freeList = new List<string>();
+                for (int j = 0; j < colHeaders.Count - 1; j++)
+                {
+                    // Додаємо лише ті, що є іксами (x1, x2...)
+                    if (colHeaders[j].StartsWith("x")) freeList.Add(colHeaders[j]);
+                }
+                freeVars = string.Join(" ", freeList);
+
+                // Формування кінцевого результату
+                double[] X = new double[nVars];
+                for (int j = 0; j < nVars; j++)
+                {
+                    string vName = $"x{j + 1}";
+                    int idx = rowHeaders.IndexOf(vName);
+                    if (idx != -1) X[j] = T[idx, freeCol];
+                    else X[j] = 0; // Якщо змінна залишилась не базисною
+                }
+
+                optZ = T[zRow, freeCol];
+                if (!isMax) optZ = -optZ; // Для мінімізації повертаємо знак назад
+
+                sb.AppendLine($"\nОптимальний розв'язок:");
+                sb.AppendLine($"Z = {optZ:F3}");
+                log = sb.ToString();
+                return X;
+            }
+
+            // Допоміжний метод для красивого логування компактної таблиці МЖВ
+            public static void LogTableauMJE(StringBuilder sb, double[,] matrix, List<string> rowHeaders, List<string> colHeaders)
+            {
+                sb.AppendFormat("{0,5} |", "");
+                for (int j = 0; j < colHeaders.Count; j++) sb.AppendFormat("{0,8}", colHeaders[j]);
+                sb.AppendLine();
+                sb.AppendLine(new string('-', 7 + 8 * colHeaders.Count));
+
+                for (int i = 0; i < rowHeaders.Count; i++)
+                {
+                    sb.AppendFormat("{0,5} |", rowHeaders[i]);
+                    for (int j = 0; j < colHeaders.Count; j++)
+                    {
+                        sb.AppendFormat("{0,8:F2}", matrix[i, j]);
+                    }
+                    sb.AppendLine();
+                }
+            }
+
+            // Метод для видалення 0-рядків (для змішаних обмежень)
+            public static double[,] RemoveZeroRows(double[,] table, ref List<string> rowHeaders, ref List<string> colHeaders, StringBuilder log)
+            {
+                int rows = table.GetLength(0);
+                int cols = table.GetLength(1);
+
+                for (int i = 0; i < rows; i++)
+                {
+                    // Шукаємо рядок, який позначений як "0 =" (базисна зміна 0)
+                    if (rowHeaders[i] == "0")
+                    {
+                        log.AppendLine($"\nОбробка нуль-рядка #{i + 1}");
+
+                        // Шукаємо додатний елемент у цьому рядку (крім вільного члена)
+                        int s = -1;
+                        for (int j = 0; j < cols - 1; j++)
+                        {
+                            if (table[i, j] > 1e-9) { s = j; break; }
+                        }
+
+                        if (s != -1)
+                        {
+                            log.AppendLine($"Розв’язувальний рядок: {rowHeaders[i]}, стовпець: {colHeaders[s]}");
+
+                            // Робимо крок МЖВ
+                            table = MjeStep(table, i, s);
+
+                            // Викреслюємо стовпець (за алгоритмом Рисунку 3.2)
+                            table = DeleteColumn(table, s);
+                            colHeaders.RemoveAt(s);
+
+                            // Рядок стає звичайною базисною змінною
+                            rowHeaders[i] = colHeaders[s].Replace("-", "");
+
+                            log.AppendLine("Матриця після видалення нуль-рядка:");
+                            log.AppendLine(MatrixToString(table));
+
+                            // Перевіряємо матрицю заново після зміни розмірності
+                            return RemoveZeroRows(table, ref rowHeaders, ref colHeaders, log);
+                        }
+                        else if (Math.Abs(table[i, cols - 1]) > 1e-9)
+                        {
+                            throw new Exception("Система обмежень є суперечливою!");
+                        }
+                    }
+                }
+                return table;
+            }
+
+            // Допоміжний метод для видалення стовпця
+            private static double[,] DeleteColumn(double[,] matrix, int colToDelete)
+            {
+                int rows = matrix.GetLength(0);
+                int cols = matrix.GetLength(1);
+                double[,] result = new double[rows, cols - 1];
+
+                for (int i = 0; i < rows; i++)
+                {
+                    int targetCol = 0;
+                    for (int j = 0; j < cols; j++)
+                    {
+                        if (j == colToDelete) continue;
+                        result[i, targetCol] = matrix[i, j];
+                        targetCol++;
+                    }
+                }
+                return result;
+            }
+
+            // Універсальний крок Модифікованих Жорданових Виключень (МЖВ)
+            public static double[,] MjeStep(double[,] T, int r, int s)
+            {
+                int rows = T.GetLength(0);
+                int cols = T.GetLength(1);
+                double pivot = T[r, s];
+
+                if (Math.Abs(pivot) < 1e-12)
+                    throw new Exception($"Розв'язувальний елемент [{r},{s}] дорівнює 0. Крок МЖВ неможливий.");
+
+                double[,] N = new double[rows, cols];
+                for (int i = 0; i < rows; i++)
+                {
+                    for (int j = 0; j < cols; j++)
+                    {
+                        if (i == r && j == s)
+                            N[i, j] = 1.0 / pivot;
+                        else if (i == r)
+                            N[i, j] = T[r, j] / pivot;
+                        else if (j == s)
+                            N[i, j] = -T[i, s] / pivot;
+                        else
+                            N[i, j] = T[i, j] - (T[i, s] * T[r, j]) / pivot;
+                    }
+                }
+                return N;
+            }
+
+            // Допоміжний метод для перетворення матриці у рядок (для логування)
+            public static string MatrixToString(double[,] matrix)
+            {
+                StringBuilder sb = new StringBuilder();
+                int rows = matrix.GetLength(0);
+                int cols = matrix.GetLength(1);
+
+                for (int i = 0; i < rows; i++)
+                {
+                    for (int j = 0; j < cols; j++)
+                    {
+                        // Форматуємо кожен елемент з вирівнюванням по правому краю (8 символів, 2 знаки після коми)
+                        sb.AppendFormat("{0,8:F2}", matrix[i, j]);
+                    }
+                    sb.AppendLine();
+                }
+
+                return sb.ToString();
+            }
         }
     }
 }
