@@ -12,16 +12,6 @@ namespace ASSPR_1
             InitializeComponent();
         }
 
-        private void dgvMatrixA_CellContentClick(object sender, DataGridViewCellEventArgs e)
-        {
-
-        }
-
-        private void dataGridView1_CellContentClick_1(object sender, DataGridViewCellEventArgs e)
-        {
-
-        }
-
         private void Form1_Load(object sender, EventArgs e)
         {
 
@@ -73,27 +63,6 @@ namespace ASSPR_1
                 vector[i] = Convert.ToDouble(grid.Rows[i].Cells[0].Value);
             }
             return vector;
-        }
-
-        // Обробник натискання кнопки "Знайти обернену матрицю"
-        private void btnInverse_Click(object sender, EventArgs e)
-        {
-            try
-            {
-                // 1. Отримуємо матрицю A з інтерфейсу
-                double[,] A = GetMatrixFromGrid(dgvMatrixA);
-
-                // 2. Обчислюємо за алгоритмом ЗЖВ
-                double[,] invA = MathHelper.Inverse(A, out string log);
-
-                // 3. Виводимо результат у таблицю для результатів
-                ShowMatrixInGrid(invA, dgvVectorB);
-                SaveLogToFile(log);
-            }
-            catch (Exception ex)
-            {
-                MessageBox.Show("Помилка: " + ex.Message);
-            }
         }
 
         private void FillVariant15()
@@ -212,16 +181,6 @@ namespace ASSPR_1
             catch (Exception ex) { MessageBox.Show("Помилка: " + ex.Message); }
         }
 
-        private void label1_Click(object sender, EventArgs e)
-        {
-
-        }
-
-        private void label3_Click(object sender, EventArgs e)
-        {
-
-        }
-
         private void btnResize_Click(object sender, EventArgs e)
         {
             int rows = (int)numRows.Value;
@@ -246,23 +205,6 @@ namespace ASSPR_1
         private void domainUpDown1_SelectedItemChanged(object sender, EventArgs e)
         {
 
-        }
-        // Допоміжний метод для налаштування таблиці (викликається кнопкою "Приклад")
-        private void InitLPGrid(int varsCount, int constrCount)
-        {
-            dgvConstraints.AllowUserToAddRows = false;
-            dgvConstraints.RowCount = constrCount + 1; // +1 для рядка Z
-            dgvConstraints.ColumnCount = varsCount + 1; // +1 для стовпця вільних членів (B)
-
-            // Називаємо колонки x1, x2... і B
-            for (int j = 0; j < varsCount; j++) dgvConstraints.Columns[j].HeaderText = $"x{j + 1}";
-            dgvConstraints.Columns[varsCount].HeaderText = "B";
-
-            // Називаємо рядки
-            for (int i = 0; i < constrCount; i++) dgvConstraints.Rows[i].HeaderCell.Value = $"О{i + 1}";
-            dgvConstraints.Rows[constrCount].HeaderCell.Value = "Z";
-
-            dgvConstraints.AutoResizeRowHeadersWidth(DataGridViewRowHeadersWidthSizeMode.AutoSizeToAllHeaders);
         }
 
         // Обробник для кнопки "Приклад"

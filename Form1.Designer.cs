@@ -69,7 +69,6 @@ namespace ASSPR_1
             rbMin = new RadioButton();
             btnSolveLP = new Button();
             txtZ = new TextBox();
-            dgvConstraints = new DataGridView();
             ((System.ComponentModel.ISupportInitialize)dgvMatrixA).BeginInit();
             ((System.ComponentModel.ISupportInitialize)dgvVectorB).BeginInit();
             ((System.ComponentModel.ISupportInitialize)dgvResult).BeginInit();
@@ -79,7 +78,6 @@ namespace ASSPR_1
             Part_A.SuspendLayout();
             Part_B.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)nudVarCount).BeginInit();
-            ((System.ComponentModel.ISupportInitialize)dgvConstraints).BeginInit();
             SuspendLayout();
             // 
             // dgvMatrixA
@@ -121,7 +119,6 @@ namespace ASSPR_1
             dgvVectorB.Name = "dgvVectorB";
             dgvVectorB.Size = new Size(240, 150);
             dgvVectorB.TabIndex = 1;
-            dgvVectorB.CellContentClick += dataGridView1_CellContentClick_1;
             // 
             // Column1_Result
             // 
@@ -227,7 +224,6 @@ namespace ASSPR_1
             label1.Size = new Size(39, 15);
             label1.TabIndex = 11;
             label1.Text = "Рядки";
-            label1.Click += label1_Click;
             // 
             // label2
             // 
@@ -246,7 +242,6 @@ namespace ASSPR_1
             label3.Size = new Size(67, 15);
             label3.TabIndex = 13;
             label3.Text = "Матриця А";
-            label3.Click += label3_Click;
             // 
             // label4
             // 
@@ -328,11 +323,10 @@ namespace ASSPR_1
             Part_B.Controls.Add(rbMin);
             Part_B.Controls.Add(btnSolveLP);
             Part_B.Controls.Add(txtZ);
-            Part_B.Controls.Add(dgvConstraints);
             Part_B.Location = new Point(4, 24);
             Part_B.Name = "Part_B";
             Part_B.Padding = new Padding(3);
-            Part_B.Size = new Size(792, 397);
+            Part_B.Size = new Size(817, 451);
             Part_B.TabIndex = 1;
             Part_B.Text = "Part_B";
             Part_B.UseVisualStyleBackColor = true;
@@ -340,7 +334,7 @@ namespace ASSPR_1
             // lstConstraints
             // 
             lstConstraints.FormattingEnabled = true;
-            lstConstraints.Location = new Point(49, 280);
+            lstConstraints.Location = new Point(49, 123);
             lstConstraints.Name = "lstConstraints";
             lstConstraints.Size = new Size(430, 94);
             lstConstraints.TabIndex = 14;
@@ -465,15 +459,6 @@ namespace ASSPR_1
             txtZ.Size = new Size(210, 23);
             txtZ.TabIndex = 1;
             // 
-            // dgvConstraints
-            // 
-            dgvConstraints.ColumnHeadersHeightSizeMode = DataGridViewColumnHeadersHeightSizeMode.AutoSize;
-            dgvConstraints.Location = new Point(49, 117);
-            dgvConstraints.Name = "dgvConstraints";
-            dgvConstraints.RowHeadersWidth = 10;
-            dgvConstraints.Size = new Size(430, 157);
-            dgvConstraints.TabIndex = 0;
-            // 
             // Form1
             // 
             AutoScaleDimensions = new SizeF(7F, 15F);
@@ -494,7 +479,6 @@ namespace ASSPR_1
             Part_B.ResumeLayout(false);
             Part_B.PerformLayout();
             ((System.ComponentModel.ISupportInitialize)nudVarCount).EndInit();
-            ((System.ComponentModel.ISupportInitialize)dgvConstraints).EndInit();
             ResumeLayout(false);
         }
 
@@ -526,7 +510,6 @@ namespace ASSPR_1
         private TabPage Part_A;
         private TabPage Part_B;
         private TextBox txtZ;
-        private DataGridView dgvConstraints;
         private RadioButton rbMax;
         private RadioButton rbMin;
         private Button btnSolveLP;
