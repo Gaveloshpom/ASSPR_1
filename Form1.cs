@@ -110,7 +110,7 @@ namespace ASSPR_1
             catch (Exception ex) { MessageBox.Show(ex.Message); }
         }
 
-        private void btnInverse_Click_1(object sender, EventArgs e)
+        private void btnInverse_Click(object sender, EventArgs e)
         {
             try
             {
@@ -202,25 +202,20 @@ namespace ASSPR_1
             }
         }
 
-        private void domainUpDown1_SelectedItemChanged(object sender, EventArgs e)
-        {
-
-        }
-
         // Обробник для кнопки "Приклад"
         private void btnExample_Click(object sender, EventArgs e)
         {
-            nudVarCount.Value = 4;
-            txtZ.Text = "x1+2x2-x3-x4";
-            rbMax.Checked = true;
+            //nudVarCount.Value = 4;
+            //txtZ.Text = "x1+2x2-x3-x4";
+            //rbMax.Checked = true;
 
-            lstConstraints.Items.Clear();
-            lstConstraints.Items.Add("x1+x2-x3-2x4<=6");
-            lstConstraints.Items.Add("x1+x2+x3-x4>=5");
-            lstConstraints.Items.Add("2x1-x2+3x3+4x4<=10");
+            //lstConstraints.Items.Clear();
+            //lstConstraints.Items.Add("x1+x2-x3-2x4<=6");
+            //lstConstraints.Items.Add("x1+x2+x3-x4>=5");
+            //lstConstraints.Items.Add("2x1-x2+3x3+4x4<=10");
 
-            txtX.Text = "";
-            txtY.Text = "";
+            //txtX.Text = "";
+            //txtY.Text = "";
 
             //nudVarCount.Value = 4;
             //txtZ.Text = "-2x1+3x2-3x4";
@@ -233,6 +228,18 @@ namespace ASSPR_1
 
             //txtX.Text = "";
             //txtY.Text = "";
+
+            nudVarCount.Value = 4;
+            txtZ.Text = "x1+x3+x6";
+            rbMax.Checked = true;
+
+            lstConstraints.Items.Clear();
+            lstConstraints.Items.Add("x1+x2+x3+x4+x5+3x6<=4");
+            lstConstraints.Items.Add("x1-4x2+x4+10x5-x6<=5");
+            lstConstraints.Items.Add("x1-3x2+7x3+x4+15x5-x6>=2");
+
+            txtX.Text = "";
+            txtY.Text = "";
         }
 
         // Обробник для кнопки "Знайти оптимальний розв'язок"

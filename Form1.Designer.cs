@@ -133,7 +133,7 @@ namespace ASSPR_1
             btnInverse.TabIndex = 2;
             btnInverse.Text = "Обернена матриця";
             btnInverse.UseVisualStyleBackColor = true;
-            btnInverse.Click += btnInverse_Click_1;
+            btnInverse.Click += btnInverse_Click;
             // 
             // btnRank
             // 
@@ -466,7 +466,7 @@ namespace ASSPR_1
             ClientSize = new Size(820, 501);
             Controls.Add(tabControl1);
             Name = "Form1";
-            Text = "Form1";
+            Text = "Form1ButNotForm1";
             Load += Form1_Load;
             ((System.ComponentModel.ISupportInitialize)dgvMatrixA).EndInit();
             ((System.ComponentModel.ISupportInitialize)dgvVectorB).EndInit();
