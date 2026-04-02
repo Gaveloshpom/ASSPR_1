@@ -418,7 +418,7 @@ namespace ASSPR_1
             //
             // Значення ЦФ після оптимізації:
             //   max: T[zRow, total] =  Z*
-            //   min: T[zRow, total] = -Z*  (тому знак змінюємо)
+            //   min: T[zRow, total] = -Z*  
             // ═══════════════════════════════════════════════════════════════════════════
             public static double[] SolveBigM(
                 double[] cObj, List<double[]> A, List<double> b, List<string> types,
@@ -450,7 +450,6 @@ namespace ASSPR_1
                 }
                 sb.AppendLine();
 
-                // ════ ВАША ОРИГІНАЛЬНА ЛОГІКА (БЕЗ ЗМІН) ════
                 int nC = A.Count;
 
                 // Гарантуємо b[i] >= 0
@@ -520,7 +519,6 @@ namespace ASSPR_1
                             T[zRow, j] -= coef * T[i, j];
                     }
                 }
-                // ════ КІНЕЦЬ БАЗОВОЇ ІНІЦІАЛІЗАЦІЇ ════
 
                 // Локальна функція для генерації назв змінних (x1, s1, a1, B)
                 Func<int, string> getVarName = (col) =>
@@ -561,7 +559,6 @@ namespace ASSPR_1
                 sb.AppendLine("Вхідна симплекс-таблиця:");
                 logTableau();
 
-                // ════ ВАША ОРИГІНАЛЬНА ЛОГІКА ІТЕРАЦІЙ ════
                 for (int iter = 0; iter < 1000; iter++)
                 {
                     int s = -1;
@@ -620,7 +617,6 @@ namespace ASSPR_1
                     if (basis[i] < nVars) X[basis[i]] = T[i, total];
 
                 optZ = T[zRow, total]; // Значення Z беремо прямо з таблиці
-                                       // ════ КІНЕЦЬ ВАШОЇ ОРИГІНАЛЬНОЇ ЛОГІКИ ════
 
                 // Логуємо фінальний результат
                 sb.AppendLine("Знайдено оптимальний розв'язок:");
