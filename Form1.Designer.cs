@@ -55,6 +55,7 @@ namespace ASSPR_1
             tabControl1 = new TabControl();
             Part_A = new TabPage();
             Part_B = new TabPage();
+            dgvConstraints_2 = new DataGridView();
             lstConstraints = new ListBox();
             label10 = new Label();
             txtY = new TextBox();
@@ -69,6 +70,7 @@ namespace ASSPR_1
             rbMin = new RadioButton();
             btnSolveLP = new Button();
             txtZ = new TextBox();
+            Column = new DataGridViewTextBoxColumn();
             ((System.ComponentModel.ISupportInitialize)dgvMatrixA).BeginInit();
             ((System.ComponentModel.ISupportInitialize)dgvVectorB).BeginInit();
             ((System.ComponentModel.ISupportInitialize)dgvResult).BeginInit();
@@ -77,6 +79,7 @@ namespace ASSPR_1
             tabControl1.SuspendLayout();
             Part_A.SuspendLayout();
             Part_B.SuspendLayout();
+            ((System.ComponentModel.ISupportInitialize)dgvConstraints_2).BeginInit();
             ((System.ComponentModel.ISupportInitialize)nudVarCount).BeginInit();
             SuspendLayout();
             // 
@@ -309,6 +312,7 @@ namespace ASSPR_1
             // 
             // Part_B
             // 
+            Part_B.Controls.Add(dgvConstraints_2);
             Part_B.Controls.Add(lstConstraints);
             Part_B.Controls.Add(label10);
             Part_B.Controls.Add(txtY);
@@ -330,6 +334,15 @@ namespace ASSPR_1
             Part_B.TabIndex = 1;
             Part_B.Text = "Part_B";
             Part_B.UseVisualStyleBackColor = true;
+            // 
+            // dgvConstraints_2
+            // 
+            dgvConstraints_2.ColumnHeadersHeightSizeMode = DataGridViewColumnHeadersHeightSizeMode.AutoSize;
+            dgvConstraints_2.Columns.AddRange(new DataGridViewColumn[] { Column });
+            dgvConstraints_2.Location = new Point(49, 233);
+            dgvConstraints_2.Name = "dgvConstraints_2";
+            dgvConstraints_2.Size = new Size(430, 150);
+            dgvConstraints_2.TabIndex = 15;
             // 
             // lstConstraints
             // 
@@ -459,6 +472,12 @@ namespace ASSPR_1
             txtZ.Size = new Size(210, 23);
             txtZ.TabIndex = 1;
             // 
+            // Column
+            // 
+            Column.AutoSizeMode = DataGridViewAutoSizeColumnMode.Fill;
+            Column.HeaderText = "";
+            Column.Name = "Column";
+            // 
             // Form1
             // 
             AutoScaleDimensions = new SizeF(7F, 15F);
@@ -478,6 +497,7 @@ namespace ASSPR_1
             Part_A.PerformLayout();
             Part_B.ResumeLayout(false);
             Part_B.PerformLayout();
+            ((System.ComponentModel.ISupportInitialize)dgvConstraints_2).EndInit();
             ((System.ComponentModel.ISupportInitialize)nudVarCount).EndInit();
             ResumeLayout(false);
         }
@@ -523,5 +543,7 @@ namespace ASSPR_1
         private TextBox txtX;
         private Label label8;
         private ListBox lstConstraints;
+        private DataGridView dgvConstraints_2;
+        private DataGridViewTextBoxColumn Column;
     }
 }

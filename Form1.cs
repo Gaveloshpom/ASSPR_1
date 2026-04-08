@@ -207,39 +207,39 @@ namespace ASSPR_1
         {
             //nudVarCount.Value = 4;
             //txtZ.Text = "x1+2x2-x3-x4";
-            //rbMax.Checked = true;
+            //rbMin.Checked = false;
 
-            //lstConstraints.Items.Clear();
-            //lstConstraints.Items.Add("x1+x2-x3-2x4<=6");
-            //lstConstraints.Items.Add("x1+x2+x3-x4>=5");
-            //lstConstraints.Items.Add("2x1-x2+3x3+4x4<=10");
-
-            //txtX.Text = "";
-            //txtY.Text = "";
-
-            //nudVarCount.Value = 4;
-            //txtZ.Text = "-2x1+3x2-3x4";
-            //rbMax.Checked = false;
-
-            //lstConstraints.Items.Clear();
-            //lstConstraints.Items.Add("x1+x2-x3-2x4<=6");
-            //lstConstraints.Items.Add("x1+x2+x3-x4>=5");
-            //lstConstraints.Items.Add("2x1-x2+3x3+4x4<=10");
+            //dgvConstraints_2.Rows.Clear();
+            //dgvConstraints_2.Rows.Add("x1+x2-x3-2x4<=6");
+            //dgvConstraints_2.Rows.Add("x1+x2+x3-x4>=5");
+            //dgvConstraints_2.Rows.Add("2x1-x2+3x3+4x4<=10");
 
             //txtX.Text = "";
             //txtY.Text = "";
 
             nudVarCount.Value = 4;
-            txtZ.Text = "x1+x3+x6";
-            rbMax.Checked = true;
+            txtZ.Text = "-2x1+3x2-3x4";
+            rbMin.Checked = true;
 
-            lstConstraints.Items.Clear();
-            lstConstraints.Items.Add("x1+x2+x3+x4+x5+3x6<=4");
-            lstConstraints.Items.Add("x1-4x2+x4+10x5-x6<=5");
-            lstConstraints.Items.Add("x1-3x2+7x3+x4+15x5-x6>=2");
+            dgvConstraints_2.Rows.Clear();
+            dgvConstraints_2.Rows.Add("x1+x2-x3-2x4<=6");
+            dgvConstraints_2.Rows.Add("x1+x2+x3-x4>=5");
+            dgvConstraints_2.Rows.Add("2x1-x2+3x3+4x4<=10");
 
             txtX.Text = "";
             txtY.Text = "";
+
+            //nudVarCount.Value = 4;
+            //txtZ.Text = "x1+x3+x6";
+            //rbMin.Checked = false;
+
+            //lstConstraints.Items.Clear();
+            //lstConstraints.Items.Add("x1+x2+x3+x4+x5+3x6<=4");
+            //lstConstraints.Items.Add("x1-4x2+x4+10x5-x6<=5");
+            //lstConstraints.Items.Add("x1-3x2+7x3+x4+15x5-x6>=2");
+
+            //txtX.Text = "";
+            //txtY.Text = "";
         }
 
         // Обробник для кнопки "Знайти оптимальний розв'язок"
@@ -247,33 +247,45 @@ namespace ASSPR_1
         {
             try
             {
-                int nVars = (int)nudVarCount.Value;
-                bool isMax = rbMax.Checked;
+                // 1. Збираємо дані з форми
+                string zExpr = txtZ.Text;
+                int varCount = (int)nudVarCount.Value;
+                bool isMin = rbMin.Checked;
 
                 if (string.IsNullOrWhiteSpace(txtZ.Text))
                     throw new Exception("Введіть цільову функцію Z.");
-                if (lstConstraints.Items.Count == 0)
+                if (dgvConstraints_2.Rows.Count == 0)
                     throw new Exception("Введіть хоча б одне обмеження.");
 
-                double[] cObj = MathHelper.ParseObjective(txtZ.Text, nVars);
-
-                var A = new List<double[]>();
-                var b = new List<double>();
-                var types = new List<string>();
-
-                foreach (var item in lstConstraints.Items)
+                List<string> constraintLines = new List<string>();
+                foreach (DataGridViewRow row in dgvConstraints_2.Rows)
                 {
-                    MathHelper.ParseConstraint(item.ToString(), nVars,
-                        out double[] row, out double rhs, out string type);
-                    A.Add(row);
-                    b.Add(rhs);
-                    types.Add(type);
+                    if (row.Cells[0].Value != null)
+                        constraintLines.Add(row.Cells[0].Value.ToString());
                 }
 
-                double[] X = MathHelper.SolveBigM(cObj, A, b, types, nVars, isMax, out double optZ, out string log);
+                // 2. Будуємо початкову таблицю
+                int[] rowVars, colVars;
+                double[,] table = MathHelper.BuildInitialTable(zExpr, constraintLines, varCount, isMin, out rowVars, out colVars);
 
-                txtX.Text = MathHelper.FormatVector(X, nVars);
-                txtY.Text = MathHelper.FormatNum(optZ);
+                // 3. Викликаємо ваші методи MathHelper
+                // Спочатку шукаємо опорний розв'язок
+                table = MathHelper.FindFeasibleSolution(table, ref rowVars, ref colVars, out string log);
+
+                if (table != null)
+                {
+                    // Потім оптимальний
+                    table = MathHelper.FindOptimalSolution(table, ref rowVars, ref colVars, isMin, out log);
+
+                    // Виводимо результат у txtResultX та txtResultZ
+                    // Логіка виводу значень змінних...
+                    //txtX.Text = MathHelper.FormatVector(X, nVars);
+                    //txtY.Text = MathHelper.FormatNum(optZ);
+                    DisplayFinalResult(table, rowVars, colVars, varCount, isMin, txtX, txtY);
+                }
+
+
+
                 SaveLogToFile(log);
             }
             catch (Exception ex)
@@ -281,7 +293,11 @@ namespace ASSPR_1
                 MessageBox.Show("Помилка: " + ex.Message, "Помилка",
                     MessageBoxButtons.OK, MessageBoxIcon.Error);
             }
+
+            
         }
+
+
 
         private void SaveLogToFile(string logContent)
         {
@@ -291,6 +307,49 @@ namespace ASSPR_1
 
                 File.WriteAllText(sfd.FileName, logContent, Encoding.UTF8);
             }
+        }
+
+        private void DisplayFinalResult(double[,] table, int[] rowVars, int[] colVars, int varCount, bool isMin, TextBox txtX, TextBox txtZ)
+        {
+            int rows = table.GetLength(0);
+            int cols = table.GetLength(1);
+            int zRowIdx = rows - 1;
+            int rhsCol = cols - 1;
+
+            // Збираємо значення змінних x1...xN
+            double[] xValues = new double[varCount];
+
+            for (int i = 0; i < rows - 1; i++)
+            {
+                int varIndex = rowVars[i]; // наприклад, 1 → x1, 2 → x2
+                if (varIndex >= 1 && varIndex <= varCount)
+                {
+                    xValues[varIndex - 1] = table[i, rhsCol];
+                }
+            }
+
+            // Змінні у стовпцях (небазисні) = 0, але перевіряємо на всяк випадок
+            for (int j = 0; j < cols - 1; j++)
+            {
+                int varIndex = colVars[j];
+                if (varIndex >= 1 && varIndex <= varCount)
+                {
+                    xValues[varIndex - 1] = 0;
+                }
+            }
+
+            // Формуємо рядок x1=..., x2=...
+            StringBuilder sbX = new StringBuilder();
+            for (int k = 0; k < varCount; k++)
+            {
+                sbX.AppendLine($"{xValues[k]:F1}; ");
+            }
+            txtX.Text = $"({sbX.ToString().Trim()})";
+
+            // Значення Z: у таблиці зберігається -Zmin (або Zmax), тому при мін множимо на -1
+            double zRaw = table[zRowIdx, rhsCol];
+            double zValue = isMin ? -zRaw : zRaw;
+            txtZ.Text = $"Z = {zValue:F1}";
         }
     }
 }
