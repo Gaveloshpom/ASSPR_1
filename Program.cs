@@ -247,7 +247,7 @@ namespace ASSPR_1
                 sb.AppendLine("\nПротокол обчислення:");
 
                 // Будуємо розширену матрицю системи AX – B = 0
-                // Стовпці 0..n-1 → коефіцієнти A; стовпець n → –B
+                // Стовпці 0..n-1 -> коефіцієнти A; стовпець n -> –B
                 double[,] aug = new double[n, n + 1];
                 for (int i = 0; i < n; i++)
                 {
@@ -431,11 +431,11 @@ namespace ASSPR_1
 
                     for (int j = 0; j < n; j++)
                     {
-                        // ЗМІНА: Записуємо коефіцієнти x1...xn у стовпці 0...(n-1)
+                        // Записуємо коефіцієнти x1...xn у стовпці 0...(n-1)
                         table[i, j] = (sign == "<=") ? coeffs[j] : -coeffs[j];
                     }
 
-                    // ЗМІНА: Вільний член (RHS) ставимо в ОСТАННІЙ стовпець (індекс n)
+                    // Вільний член (RHS) ставимо в ОСТАННІЙ стовпець (індекс n)
                     table[i, n] = (sign == "<=") ? rhs : -rhs;
                 }
 
@@ -446,11 +446,11 @@ namespace ASSPR_1
 
                 for (int j = 0; j < n; j++)
                 {
-                    // ЗМІНА: Синхронізуємо індекси colVars зі стовпцями матриці
+                    // Синхронізуємо індекси colVars зі стовпцями матриці
                     colVars[j] = (j + 1); // Змінні x1, x2...
 
                     double c = zCoeffs[j];
-                    // ЗМІНА: Записуємо в j-тий стовпець
+                    // Записуємо в j-тий стовпець
                     table[m, j] = isMin ? c : -c;
                 }
 
@@ -467,7 +467,6 @@ namespace ASSPR_1
 
             /// <summary>
             /// Процедура Модифікованих Жорданових Виключень (МЖВ)
-            /// Відповідно до Рисунка 1 (image_5e245d.png)
             /// </summary>
             public static double[,] MJV_Procedure(double[,] A, int r, int s)
             {
@@ -512,10 +511,8 @@ namespace ASSPR_1
 
             /// <summary>
             /// Алгоритм пошуку опорного розв'язку
-            /// Відповідно до Рисунка 2.3 (image_5e2482.png)
-            /// Припускаємо: стовпець [i, 0] — це «одиничний стовпець» (вільні члени)
             /// </summary>
-            public static double[,] FindFeasibleSolution(double[,] table, ref int[] rowVars, ref int[] colVars, out string log)
+            public static double[,] FindFeasibleSolution(double[,] table, ref int[] rowVars, ref int[] colVars, int varCount, out string log)
             {
                 StringBuilder sb = new StringBuilder();
                 sb.AppendLine("--- Пошук опорного розв'язку ---");
@@ -526,7 +523,7 @@ namespace ASSPR_1
                     iteration++;
                     int rows = table.GetLength(0);
                     int cols = table.GetLength(1);
-                    int rhsCol = cols - 1; // ЗМІНА: Індекс стовпця вільних членів (останній)
+                    int rhsCol = cols - 1; // Індекс стовпця вільних членів (останній)
                     int sCol = -1;
                     int rRow = -1;
 
@@ -540,7 +537,7 @@ namespace ASSPR_1
                     // Якщо від'ємних немає -> Опорний розв'язок знайдено
                     if (negativeRowIdx == -1)
                     {
-                        sb.AppendLine("Опорний розв'язок знайдено.");
+                        //sb.AppendLine("Опорний розв'язок знайдено.");
                         log = sb.ToString();
                         return table;
                     }
@@ -556,13 +553,16 @@ namespace ASSPR_1
                     {
                         sb.AppendLine("Система обмежень є суперечливою.");
                         log = sb.ToString();
-                        return null;
+                        throw new Exception("Система обмежень є суперечливою.");
+                        //return null;
                     }
 
                     // 3. РОЗВ'ЯЗУВАЛЬНИЙ РЯДОК — це рядок з від'ємним вільним членом
                     rRow = negativeRowIdx;
 
-                    sb.AppendLine($"Ітерація {iteration}: r={rRow}, s={sCol}, pivot={table[rRow, sCol]:F2}");
+                    sb.AppendLine($"Розв'язувальний рядок:    {FormatVarName(rowVars[rRow], varCount)}");
+                    sb.AppendLine($"Розв'язувальний стовпець: -{FormatVarName(colVars[sCol], varCount)}");
+                    sb.AppendLine();
 
                     // 4. Процедура МЖВ
                     table = MJV_Procedure(table, rRow, sCol);
@@ -571,15 +571,15 @@ namespace ASSPR_1
                     int temp = rowVars[rRow];
                     rowVars[rRow] = colVars[sCol];
                     colVars[sCol] = temp;
+
+                    sb.Append(PrintTableToLog(table, rowVars, colVars, varCount));
                 }
             }
 
             /// <summary>
-            /// Алгоритм пошуку оптимального розв'язку (мінімізація Z)
-            /// Відповідно до Рисунка 2.5 (image_600502.png)
-            /// Припускаємо: останній рядок [rows-1, j] — це Z-рядок
+            /// Алгоритм пошуку оптимального розв'язку 
             /// </summary>
-            public static double[,] FindOptimalSolution(double[,] table, ref int[] rowVars, ref int[] colVars, bool isMin, out string log)
+            public static double[,] FindOptimalSolution(double[,] table, ref int[] rowVars, ref int[] colVars, int varCount, out string log)
             {
                 StringBuilder sb = new StringBuilder();
                 sb.AppendLine("--- Пошук оптимального розв'язку ---");
@@ -594,21 +594,21 @@ namespace ASSPR_1
                     int rhsCol = cols - 1;
                     int sCol = -1;
 
-                    // Шукаємо позитивний елемент у Z-рядку (після fix BuildInitialTable це працює і для min і для max)
+                    // Шукаємо від'ємний елемент у Z-рядку
                     for (int j = 0; j < cols - 1; j++)
                     {
                         if (table[zRowIdx, j] < -1e-9) { sCol = j; break; }
                     }
 
-                    // Немає позитивних → оптимум знайдено
+                    // Немає від'ємних -> оптимум знайдено
                     if (sCol == -1)
                     {
-                        sb.AppendLine("Оптимальний розв'язок знайдено.");
+                        //sb.AppendLine("Оптимальний розв'язок знайдено.");
                         log = sb.ToString();
                         return table;
                     }
 
-                    // Мінімальне невід'ємне відношення → розв'язувальний рядок
+                    // Мінімальне невід'ємне відношення -> розв'язувальний рядок
                     double minRatio = double.MaxValue;
                     int rRow = -1;
                     for (int i = 0; i < rows - 1; i++)
@@ -628,17 +628,90 @@ namespace ASSPR_1
                     {
                         sb.AppendLine("Функція мети не обмежена.");
                         log = sb.ToString();
-                        return null;
+                        throw new Exception("Функція мети не обмежена.");
+                        //return null;
                     }
 
-                    sb.AppendLine($"Ітерація {iteration}: r={rRow}, s={sCol}, pivot={table[rRow, sCol]:F4}");
+                    sb.AppendLine($"Розв'язувальний рядок:    {FormatVarName(rowVars[rRow], varCount)}");
+                    sb.AppendLine($"Розв'язувальний стовпець: -{FormatVarName(colVars[sCol], varCount)}");
+                    sb.AppendLine();
 
                     table = MJV_Procedure(table, rRow, sCol);
 
                     int temp = rowVars[rRow];
                     rowVars[rRow] = colVars[sCol];
                     colVars[sCol] = temp;
+
+                    sb.Append(PrintTableToLog(table, rowVars, colVars, varCount));
                 }
+            }
+
+            public static string FormatVarName(int index, int varCount)
+            {
+                // Якщо індекс від 1 до varCount - це змінні x
+                if (index >= 1 && index <= varCount) return "x" + index;
+                // Якщо індекс більший за varCount - це додаткові змінні y (slack variables)
+                if (index > varCount) return "y" + (index - varCount);
+                // На випадок, якщо ви використовуєте від'ємні індекси для y
+                if (index < 0) return "y" + Math.Abs(index);
+                return "?";
+            }
+
+            public static string PrintTableToLog(double[,] table, int[] rowVars, int[] colVars, int varCount)
+            {
+                StringBuilder sb = new StringBuilder();
+                int rows = table.GetLength(0);
+                int cols = table.GetLength(1);
+
+                // Шапка таблиці (-x1, -x2... 1)
+                sb.Append("      ");
+                for (int j = 0; j < cols - 1; j++)
+                {
+                    string colName = FormatVarName(colVars[j], varCount);
+                    sb.Append($"{("-" + colName),10}");
+                }
+                sb.AppendLine($"{"1",10}");
+                sb.AppendLine(new string('-', 8 + 10 * cols));
+
+                // Рядки таблиці
+                for (int i = 0; i < rows - 1; i++)
+                {
+                    string rowName = FormatVarName(rowVars[i], varCount);
+                    sb.Append($"{rowName,-3} =");
+                    for (int j = 0; j < cols; j++)
+                    {
+                        sb.Append($"{table[i, j],10:F2}");
+                    }
+                    sb.AppendLine();
+                }
+
+                // Z-рядок
+                sb.Append("Z   =");
+                for (int j = 0; j < cols; j++)
+                {
+                    sb.Append($"{table[rows - 1, j],10:F2}");
+                }
+                sb.AppendLine();
+                sb.AppendLine();
+
+                return sb.ToString();
+            }
+
+            public static string GetXVectorString(double[,] table, int[] rowVars, int[] colVars, int varCount)
+            {
+                int rows = table.GetLength(0);
+                int cols = table.GetLength(1);
+                int rhsCol = cols - 1;
+                double[] xValues = new double[varCount];
+
+                for (int i = 0; i < rows - 1; i++)
+                {
+                    int varIndex = rowVars[i];
+                    if (varIndex >= 1 && varIndex <= varCount) xValues[varIndex - 1] = table[i, rhsCol];
+                }
+
+                var formatted = xValues.Select(v => v.ToString("F2"));
+                return $"X = ({string.Join("; ", formatted)})";
             }
         }
     }

@@ -202,6 +202,7 @@ namespace ASSPR_1
             }
         }
 
+        //Part_B
         // Обробник для кнопки "Приклад"
         private void btnExample_Click(object sender, EventArgs e)
         {
@@ -217,29 +218,29 @@ namespace ASSPR_1
             //txtX.Text = "";
             //txtY.Text = "";
 
-            nudVarCount.Value = 4;
-            txtZ.Text = "-2x1+3x2-3x4";
-            rbMin.Checked = true;
-
-            dgvConstraints_2.Rows.Clear();
-            dgvConstraints_2.Rows.Add("x1+x2-x3-2x4<=6");
-            dgvConstraints_2.Rows.Add("x1+x2+x3-x4>=5");
-            dgvConstraints_2.Rows.Add("2x1-x2+3x3+4x4<=10");
-
-            txtX.Text = "";
-            txtY.Text = "";
-
             //nudVarCount.Value = 4;
-            //txtZ.Text = "x1+x3+x6";
-            //rbMin.Checked = false;
+            //txtZ.Text = "-2x1+3x2-3x4";
+            //rbMin.Checked = true;
 
-            //lstConstraints.Items.Clear();
-            //lstConstraints.Items.Add("x1+x2+x3+x4+x5+3x6<=4");
-            //lstConstraints.Items.Add("x1-4x2+x4+10x5-x6<=5");
-            //lstConstraints.Items.Add("x1-3x2+7x3+x4+15x5-x6>=2");
+            //dgvConstraints_2.Rows.Clear();
+            //dgvConstraints_2.Rows.Add("x1+x2-x3-2x4<=6");
+            //dgvConstraints_2.Rows.Add("x1+x2+x3-x4>=5");
+            //dgvConstraints_2.Rows.Add("2x1-x2+3x3+4x4<=10");
 
             //txtX.Text = "";
             //txtY.Text = "";
+
+            nudVarCount.Value = 4;
+            txtZ.Text = "x1+x3+x6";
+            rbMin.Checked = false;
+
+            dgvConstraints_2.Rows.Clear();
+            dgvConstraints_2.Rows.Add("x1+x2+x3+x4+x5+3x6<=4");
+            dgvConstraints_2.Rows.Add("x1-4x2+x4+10x5-x6<=5");
+            dgvConstraints_2.Rows.Add("x1-3x2+7x3+x4+15x5-x6<=2");
+
+            txtX.Text = "";
+            txtY.Text = "";
         }
 
         // Обробник для кнопки "Знайти оптимальний розв'язок"
@@ -264,29 +265,50 @@ namespace ASSPR_1
                         constraintLines.Add(row.Cells[0].Value.ToString());
                 }
 
+                StringBuilder fullLog = new StringBuilder();
+                fullLog.AppendLine("Згенерований протокол обчислення:\n");
+                fullLog.AppendLine("Постановка задачі:\n");
+                fullLog.AppendLine($"Z = {zExpr} -> {(isMin ? "min" : "max")}\n");
+                fullLog.AppendLine("при обмеженнях:\n");
+                foreach (var c in constraintLines) fullLog.AppendLine(c);
+                fullLog.AppendLine($"\nx[j]>=0, j=1,{varCount}\n");
+
                 // 2. Будуємо початкову таблицю
                 int[] rowVars, colVars;
                 double[,] table = MathHelper.BuildInitialTable(zExpr, constraintLines, varCount, isMin, out rowVars, out colVars);
 
-                // 3. Викликаємо ваші методи MathHelper
-                // Спочатку шукаємо опорний розв'язок
-                table = MathHelper.FindFeasibleSolution(table, ref rowVars, ref colVars, out string log);
+                fullLog.AppendLine("Вхідна симплекс-таблиця:");
+                fullLog.Append(MathHelper.PrintTableToLog(table, rowVars, colVars, varCount));
+
+                // 3. Шукаємо опорний розв'язок
+                string stepLog;
+                table = MathHelper.FindFeasibleSolution(table, ref rowVars, ref colVars, varCount, out stepLog);
+                fullLog.Append(stepLog); // Додаємо лог опорного рішення
 
                 if (table != null)
                 {
-                    // Потім оптимальний
-                    table = MathHelper.FindOptimalSolution(table, ref rowVars, ref colVars, isMin, out log);
+                    fullLog.AppendLine("Знайдено опорний розв'язок:\n");
+                    fullLog.AppendLine(MathHelper.GetXVectorString(table, rowVars, colVars, varCount) + "\n");
 
-                    // Виводимо результат у txtResultX та txtResultZ
-                    // Логіка виводу значень змінних...
-                    //txtX.Text = MathHelper.FormatVector(X, nVars);
-                    //txtY.Text = MathHelper.FormatNum(optZ);
-                    DisplayFinalResult(table, rowVars, colVars, varCount, isMin, txtX, txtY);
+                    // 4. Шукаємо оптимальний розв'язок
+                    table = MathHelper.FindOptimalSolution(table, ref rowVars, ref colVars, varCount, out stepLog);
+                    fullLog.Append(stepLog); // Додаємо лог оптимального рішення
+
+                    if (table != null)
+                    {
+                        fullLog.AppendLine("Знайдено оптимальний розв'язок:\n");
+                        fullLog.AppendLine(MathHelper.GetXVectorString(table, rowVars, colVars, varCount) + "\n");
+
+                        double zRaw = table[table.GetLength(0) - 1, table.GetLength(1) - 1];
+                        double zValue = isMin ? -zRaw : zRaw;
+                        fullLog.AppendLine($"{(isMin ? "Min" : "Max")} (Z) = {zValue:F2}");
+
+                        DisplayFinalResult(table, rowVars, colVars, varCount, isMin, txtX, txtY);
+                    }
                 }
 
-
-
-                SaveLogToFile(log);
+                // Зберігаємо повний сформований лог
+                SaveLogToFile(fullLog.ToString());
             }
             catch (Exception ex)
             {
@@ -297,8 +319,7 @@ namespace ASSPR_1
             
         }
 
-
-
+        //Common
         private void SaveLogToFile(string logContent)
         {
             using (SaveFileDialog sfd = new SaveFileDialog())
@@ -321,7 +342,7 @@ namespace ASSPR_1
 
             for (int i = 0; i < rows - 1; i++)
             {
-                int varIndex = rowVars[i]; // наприклад, 1 → x1, 2 → x2
+                int varIndex = rowVars[i]; // наприклад, 1 -> x1, 2 -> x2
                 if (varIndex >= 1 && varIndex <= varCount)
                 {
                     xValues[varIndex - 1] = table[i, rhsCol];
