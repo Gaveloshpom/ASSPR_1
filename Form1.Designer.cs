@@ -55,7 +55,8 @@ namespace ASSPR_1
             tabControl1 = new TabControl();
             Part_A = new TabPage();
             Part_B = new TabPage();
-            lstConstraints = new ListBox();
+            dgvConstraints_2 = new DataGridView();
+            Column = new DataGridViewTextBoxColumn();
             label10 = new Label();
             txtY = new TextBox();
             label9 = new Label();
@@ -77,6 +78,7 @@ namespace ASSPR_1
             tabControl1.SuspendLayout();
             Part_A.SuspendLayout();
             Part_B.SuspendLayout();
+            ((System.ComponentModel.ISupportInitialize)dgvConstraints_2).BeginInit();
             ((System.ComponentModel.ISupportInitialize)nudVarCount).BeginInit();
             SuspendLayout();
             // 
@@ -309,7 +311,7 @@ namespace ASSPR_1
             // 
             // Part_B
             // 
-            Part_B.Controls.Add(lstConstraints);
+            Part_B.Controls.Add(dgvConstraints_2);
             Part_B.Controls.Add(label10);
             Part_B.Controls.Add(txtY);
             Part_B.Controls.Add(label9);
@@ -331,13 +333,20 @@ namespace ASSPR_1
             Part_B.Text = "Part_B";
             Part_B.UseVisualStyleBackColor = true;
             // 
-            // lstConstraints
+            // dgvConstraints_2
             // 
-            lstConstraints.FormattingEnabled = true;
-            lstConstraints.Location = new Point(49, 123);
-            lstConstraints.Name = "lstConstraints";
-            lstConstraints.Size = new Size(430, 94);
-            lstConstraints.TabIndex = 14;
+            dgvConstraints_2.ColumnHeadersHeightSizeMode = DataGridViewColumnHeadersHeightSizeMode.AutoSize;
+            dgvConstraints_2.Columns.AddRange(new DataGridViewColumn[] { Column });
+            dgvConstraints_2.Location = new Point(49, 119);
+            dgvConstraints_2.Name = "dgvConstraints_2";
+            dgvConstraints_2.Size = new Size(430, 150);
+            dgvConstraints_2.TabIndex = 15;
+            // 
+            // Column
+            // 
+            Column.AutoSizeMode = DataGridViewAutoSizeColumnMode.Fill;
+            Column.HeaderText = "";
+            Column.Name = "Column";
             // 
             // label10
             // 
@@ -478,6 +487,7 @@ namespace ASSPR_1
             Part_A.PerformLayout();
             Part_B.ResumeLayout(false);
             Part_B.PerformLayout();
+            ((System.ComponentModel.ISupportInitialize)dgvConstraints_2).EndInit();
             ((System.ComponentModel.ISupportInitialize)nudVarCount).EndInit();
             ResumeLayout(false);
         }
@@ -522,6 +532,7 @@ namespace ASSPR_1
         private Label label9;
         private TextBox txtX;
         private Label label8;
-        private ListBox lstConstraints;
+        private DataGridView dgvConstraints_2;
+        private DataGridViewTextBoxColumn Column;
     }
 }

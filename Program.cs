@@ -247,7 +247,7 @@ namespace ASSPR_1
                 sb.AppendLine("\nПротокол обчислення:");
 
                 // Будуємо розширену матрицю системи AX – B = 0
-                // Стовпці 0..n-1 → коефіцієнти A; стовпець n → –B
+                // Стовпці 0..n-1 -> коефіцієнти A; стовпець n -> –B
                 double[,] aug = new double[n, n + 1];
                 for (int i = 0; i < n; i++)
                 {
@@ -355,25 +355,6 @@ namespace ASSPR_1
                 return X;
             }
 
-            // Множення матриці на вектор
-            public static double[] MultiplyMatrixByVector(double[,] matrix, double[] vector)
-            {
-                int rows = matrix.GetLength(0);
-                int cols = matrix.GetLength(1);
-                double[] result = new double[rows];
-
-                for (int i = 0; i < rows; i++)
-                {
-                    double sum = 0;
-                    for (int j = 0; j < cols; j++)
-                    {
-                        sum += matrix[i, j] * vector[j];
-                    }
-                    result[i] = sum;
-                }
-                return result;
-            }
-
             // Допоміжний метод для логування матриць
             public static void LogMatrix(StringBuilder sb, double[,] matrix)
             {
@@ -395,316 +376,343 @@ namespace ASSPR_1
                 }
             }
 
-            // ── Крок МЖВ ─────────────────────────────────────────────────────────────
-            public static double[,] MjeStep(double[,] T, int r, int s, int rows, int cols)
+            // Метод для витягування коефіцієнтів з рядка типу "2x1 - 3x2 + x4 <= 10"
+            public static double[] ParseLine(string input, int varCount, out string sign, out double rhs)
             {
-                double pivot = T[r, s];
-                if (Math.Abs(pivot) < 1e-12)
-                    throw new Exception($"Розв'язувальний елемент [{r},{s}] = 0.");
+                double[] coeffs = new double[varCount];
+                rhs = 0;
+                sign = "<=";
 
-                double[,] N = new double[rows, cols];
+                // Визначаємо знак і розділяємо на ліву та праву частини
+                if (input.Contains("<=")) sign = "<=";
+                else if (input.Contains(">=")) sign = ">=";
+                else if (input.Contains("=")) sign = "=";
+
+                string[] parts = input.Split(new[] { "<=", ">=", "=" }, StringSplitOptions.RemoveEmptyEntries);
+                string lhs = parts[0];
+                if (parts.Length > 1) double.TryParse(parts[1].Trim().Replace('.', ','), out rhs);
+
+                // Регулярний вираз для пошуку [число]x[номер]
+                // Група 1: число (коефіцієнт), Група 2: номер змінної
+                Regex regex = new Regex(@"([+-]?\s*\d*(?:[.,]\d+)?)\s*x(\d+)", RegexOptions.IgnoreCase);
+                MatchCollection matches = regex.Matches(lhs);
+
+                foreach (Match m in matches)
+                {
+                    string valStr = m.Groups[1].Value.Replace(" ", "").Replace('.', ',');
+                    int varIdx = int.Parse(m.Groups[2].Value) - 1; // x1 -> індекс 0
+
+                    double coeff = 0;
+                    if (string.IsNullOrEmpty(valStr) || valStr == "+") coeff = 1;
+                    else if (valStr == "-") coeff = -1;
+                    else double.TryParse(valStr, out coeff);
+
+                    if (varIdx < varCount) coeffs[varIdx] = coeff;
+                }
+
+                return coeffs;
+            }
+
+            public static double[,] BuildInitialTable(string zFunc, List<string> constraints, int varCount, bool isMin, out int[] rowVars, out int[] colVars)
+            {
+                int m = constraints.Count; // Кількість обмежень
+                int n = varCount;          // Кількість змінних
+                double[,] table = new double[m + 1, n + 1];
+
+                rowVars = new int[m + 1]; // Індекси змінних зліва (базис: y1, y2...)
+                colVars = new int[n + 1]; // Індекси змінних зверху (x1, x2...)
+
+                // 1. Заповнюємо обмеження (рядки y1, y2...)
+                for (int i = 0; i < m; i++)
+                {
+                    double[] coeffs = ParseLine(constraints[i], n, out string sign, out double rhs);
+
+                    rowVars[i] = -(i + 1); // Позначаємо базисні змінні як -1, -2 (y1, y2)
+
+                    for (int j = 0; j < n; j++)
+                    {
+                        // Записуємо коефіцієнти x1...xn у стовпці 0...(n-1)
+                        table[i, j] = (sign == "<=") ? coeffs[j] : -coeffs[j];
+                    }
+
+                    // Вільний член (RHS) ставимо в ОСТАННІЙ стовпець (індекс n)
+                    table[i, n] = (sign == "<=") ? rhs : -rhs;
+                }
+
+                // 2. Заповнюємо цільову функцію Z (останній рядок)
+                double[] zCoeffs = ParseLine(zFunc, n, out string dummySign, out double dummyRhs);
+
+                rowVars[m] = 0; // Мітка для Z-рядка
+
+                for (int j = 0; j < n; j++)
+                {
+                    // Синхронізуємо індекси colVars зі стовпцями матриці
+                    colVars[j] = (j + 1); // Змінні x1, x2...
+
+                    double c = zCoeffs[j];
+                    // Записуємо в j-тий стовпець
+                    table[m, j] = isMin ? c : -c;
+                }
+
+                // Задаємо початкове значення цільової функції (зазвичай 0) в останній стовпець
+                table[m, n] = 0;
+
+                // Мітка для стовпця вільних членів (опціонально, залежить від вашої логіки)
+                colVars[n] = 0;
+
+                return table;
+            }
+
+            //Part_B
+
+            /// <summary>
+            /// Процедура Модифікованих Жорданових Виключень (МЖВ)
+            /// </summary>
+            public static double[,] MJV_Procedure(double[,] A, int r, int s)
+            {
+                int rows = A.GetLength(0);
+                int cols = A.GetLength(1);
+                double pivot = A[r, s];
+
+                if (Math.Abs(pivot) < 1e-9)
+                    throw new Exception("Розв'язувальний елемент дорівнює нулю!");
+
+                double[,] B = new double[rows, cols];
+
                 for (int i = 0; i < rows; i++)
+                {
                     for (int j = 0; j < cols; j++)
                     {
-                        if (i == r && j == s) N[i, j] = 1.0 / pivot;
-                        else if (i == r) N[i, j] = T[r, j] / pivot;
-                        else if (j == s) N[i, j] = -T[i, s] / pivot;
-                        else N[i, j] = T[i, j] - T[i, s] * T[r, j] / pivot;
+                        // 1. Розв'язувальний елемент замінюють на «1»
+                        if (i == r && j == s) B[i, j] = 1.0;
+
+                        // 2. Інші елементи розв'язувального стовпця змінюють лише свої знаки
+                        else if (j == s) B[i, j] = -A[i, s];
+
+                        // 3. Інші елементи розв'язувального рядка залишаються без змін
+                        else if (i == r) B[i, j] = A[r, j];
+
+                        // 4. Усі інші елементи розраховують за формулою b_ij = a_ij*a_rs - a_is*a_rj
+                        else B[i, j] = A[i, j] * pivot - A[i, s] * A[r, j];
                     }
-                return N;
-            }
-
-            // ── Парсери ───────────────────────────────────────────────────────────────
-            public static double[] ParseObjective(string expr, int nVars)
-            {
-                double[] c = new double[nVars];
-                string clean = expr.Replace(" ", "");
-                if (!clean.StartsWith("-")) clean = "+" + clean;
-                foreach (Match m in Regex.Matches(clean, @"([+-]\d*\.?\d*)[xX](\d+)"))
-                {
-                    int idx = int.Parse(m.Groups[2].Value) - 1;
-                    if (idx < nVars) c[idx] = ParseCoef(m.Groups[1].Value);
                 }
-                return c;
-            }
 
-            public static void ParseConstraint(string raw, int nVars,
-                out double[] row, out double rhs, out string type)
-            {
-                row = new double[nVars]; rhs = 0; type = "<=";
-                string s = raw.Replace(" ", "");
-                string lhs;
-
-                if (s.Contains("<=")) { var p = s.Split(new[] { "<=" }, 2, StringSplitOptions.None); lhs = p[0]; rhs = ParseNum(p[1]); type = "<="; }
-                else if (s.Contains(">=")) { var p = s.Split(new[] { ">=" }, 2, StringSplitOptions.None); lhs = p[0]; rhs = ParseNum(p[1]); type = ">="; }
-                else if (s.Contains("=")) { var p = s.Split(new[] { "=" }, 2, StringSplitOptions.None); lhs = p[0]; rhs = ParseNum(p[1]); type = "="; }
-                else throw new Exception($"Не вдалося розпізнати обмеження: «{raw}»");
-
-                if (!lhs.StartsWith("-")) lhs = "+" + lhs;
-                foreach (Match m in Regex.Matches(lhs, @"([+-]\d*\.?\d*)[xX](\d+)"))
+                // 5. Усі елементи в новій таблиці ділять на розв'язувальний елемент ars
+                for (int i = 0; i < rows; i++)
                 {
-                    int idx = int.Parse(m.Groups[2].Value) - 1;
-                    if (idx < nVars) row[idx] = ParseCoef(m.Groups[1].Value);
+                    for (int j = 0; j < cols; j++)
+                    {
+                        B[i, j] /= pivot;
+                    }
                 }
+
+                return B;
             }
 
-            public static double ParseCoef(string s)
-            {
-                if (s == "+" || s == "") return 1.0;
-                if (s == "-") return -1.0;
-                return double.Parse(s, System.Globalization.CultureInfo.InvariantCulture);
-            }
-
-            public static double ParseNum(string s)
-                => double.Parse(s, System.Globalization.CultureInfo.InvariantCulture);
-
-            public static string FormatNum(double v)
-            {
-                double r = Math.Round(v, 6);
-                return r == Math.Floor(r)
-                    ? ((long)r).ToString()
-                    : r.ToString("G6", System.Globalization.CultureInfo.InvariantCulture);
-            }
-
-            public static string FormatVector(double[] X, int n)
-            {
-                var parts = new string[n];
-                for (int i = 0; i < n; i++) parts[i] = FormatNum(X[i]);
-                return "(" + string.Join("; ", parts) + ")";
-            }
-
-            // ═══════════════════════════════════════════════════════════════════════════
-            // BIG-M SIMPLEX (МЖВ)
-            // ═══════════════════════════════════════════════════════════════════════════
-            //
-            // Структура таблиці (стовпці):
-            //   [0 .. nVars-1]              – початкові змінні  x_j
-            //   [nVars .. nVars+nC-1]       – слабкі/надлишкові s_i  (+1 для <=, -1 для >=)
-            //   [nVars+nC .. total-1]       – штучні змінні     a_i  (для >= та =)
-            //   [total]                     – права частина     b
-            //
-            // Z-рядок (рядок nC):
-            //   max: -c_j для x; +M для a_i  → шукаємо від'ємний мінімум
-            //   min: +c_j для x; -M для a_i  → шукаємо від'ємний мінімум у нагованому рядку
-            //   Після початкового базисного виключення штучних a_i рядок готовий.
-            //
-            // Значення ЦФ після оптимізації:
-            //   max: T[zRow, total] =  Z*
-            //   min: T[zRow, total] = -Z*  
-            // ═══════════════════════════════════════════════════════════════════════════
-            public static double[] SolveBigM(
-                double[] cObj, List<double[]> A, List<double> b, List<string> types,
-                int nVars, bool isMax, out double optZ, out string log)
+            /// <summary>
+            /// Алгоритм пошуку опорного розв'язку
+            /// </summary>
+            public static double[,] FindFeasibleSolution(double[,] table, ref int[] rowVars, ref int[] colVars, int varCount, out string log)
             {
                 StringBuilder sb = new StringBuilder();
-                sb.AppendLine("Згенерований протокол обчислення:\n");
-                sb.AppendLine("Постановка задачі:");
+                sb.AppendLine("--- Пошук опорного розв'язку ---");
+                int iteration = 0;
 
-                // Логуємо цільову функцію
-                sb.Append("Z = ");
-                for (int j = 0; j < nVars; j++)
+                while (true)
                 {
-                    if (j > 0 && cObj[j] >= 0) sb.Append("+");
-                    sb.Append($"{cObj[j]:F2}*x{j + 1}");
-                }
-                sb.AppendLine(isMax ? " -> max" : " -> min");
+                    iteration++;
+                    int rows = table.GetLength(0);
+                    int cols = table.GetLength(1);
+                    int rhsCol = cols - 1; // Індекс стовпця вільних членів (останній)
+                    int sCol = -1;
+                    int rRow = -1;
 
-                // Логуємо обмеження
-                sb.AppendLine("\nпри обмеженнях:");
-                for (int i = 0; i < A.Count; i++)
-                {
-                    for (int j = 0; j < nVars; j++)
+                    // 1. Пошук від'ємного елемента у стовпці вільних членів (крім Z-рядка)
+                    int negativeRowIdx = -1;
+                    for (int i = 0; i < rows - 1; i++)
                     {
-                        if (j > 0 && A[i][j] >= 0) sb.Append("+");
-                        sb.Append($"{A[i][j]:F2}*x{j + 1}");
+                        if (table[i, rhsCol] < -1e-9) { negativeRowIdx = i; break; }
                     }
-                    sb.AppendLine($"{types[i]}{b[i]:F2}");
-                }
-                sb.AppendLine();
 
-                int nC = A.Count;
-
-                // Гарантуємо b[i] >= 0
-                for (int i = 0; i < nC; i++)
-                {
-                    if (b[i] < -1e-12)
+                    // Якщо від'ємних немає -> Опорний розв'язок знайдено
+                    if (negativeRowIdx == -1)
                     {
-                        for (int j = 0; j < nVars; j++) A[i][j] = -A[i][j];
-                        b[i] = -b[i];
-                        types[i] = types[i] == "<=" ? ">=" : types[i] == ">=" ? "<=" : "=";
+                        //sb.AppendLine("Опорний розв'язок знайдено.");
+                        log = sb.ToString();
+                        return table;
                     }
-                }
 
-                int nArt = 0;
-                foreach (var t in types) if (t == ">=" || t == "=") nArt++;
-
-                int nSlack = nC;
-                int total = nVars + nSlack + nArt;
-                double[,] T = new double[nC + 1, total + 1];
-
-                const double BIG_M = 1e8; // Трохи збільшимо для точності
-                int[] basis = new int[nC];
-                int artIdx = 0;
-
-                // Заповнення обмежень
-                for (int i = 0; i < nC; i++)
-                {
-                    for (int j = 0; j < nVars; j++) T[i, j] = A[i][j];
-                    T[i, total] = b[i];
-
-                    if (types[i] == "<=")
+                    // 2. Пошук від'ємного елемента в знайденому рядку -> розв'язувальний стовпець
+                    for (int j = 0; j < cols - 1; j++)
                     {
-                        T[i, nVars + i] = 1.0;
-                        basis[i] = nVars + i;
+                        if (table[negativeRowIdx, j] < -1e-9) { sCol = j; break; }
                     }
-                    else if (types[i] == ">=")
+
+                    // Якщо в рядку немає від'ємних елементів, а вільний член від'ємний -> Система суперечлива
+                    if (sCol == -1)
                     {
-                        T[i, nVars + i] = -1.0;
-                        T[i, nVars + nSlack + artIdx] = 1.0;
-                        basis[i] = nVars + nSlack + artIdx++;
+                        sb.AppendLine("Система обмежень є суперечливою.");
+                        log = sb.ToString();
+                        throw new Exception("Система обмежень є суперечливою.");
+                        //return null;
                     }
-                    else // "="
-                    {
-                        T[i, nVars + nSlack + artIdx] = 1.0;
-                        basis[i] = nVars + nSlack + artIdx++;
-                    }
-                }
 
-                // Z-рядок: коефіцієнти -c_j
-                int zRow = nC;
-                for (int j = 0; j < nVars; j++)
-                    T[zRow, j] = -cObj[j];
+                    // 3. РОЗВ'ЯЗУВАЛЬНИЙ РЯДОК — це рядок з від'ємним вільним членом
+                    rRow = negativeRowIdx;
 
-                // Штрафи Big-M для штучних змінних
-                for (int j = nVars + nSlack; j < total; j++)
-                    T[zRow, j] = isMax ? BIG_M : -BIG_M;
-
-                // Базисне виключення штучних змінних із Z-рядка
-                int currentArtIdx = 0;
-                for (int i = 0; i < nC; i++)
-                {
-                    if (types[i] == ">=" || types[i] == "=")
-                    {
-                        int aCol = nVars + nSlack + currentArtIdx++;
-                        double coef = T[zRow, aCol];
-                        for (int j = 0; j <= total; j++)
-                            T[zRow, j] -= coef * T[i, j];
-                    }
-                }
-
-                // Локальна функція для генерації назв змінних (x1, s1, a1, B)
-                Func<int, string> getVarName = (col) =>
-                {
-                    if (col < nVars) return $"x{col + 1}";
-                    if (col < nVars + nSlack) return $"s{col - nVars + 1}";
-                    if (col < total) return $"a{col - nVars - nSlack + 1}";
-                    return "B";
-                };
-
-                // Локальна функція для виводу таблиці T в лог
-                Action logTableau = () =>
-                {
-                    sb.AppendFormat("{0,5} | ", "Базис");
-                    for (int j = 0; j <= total; j++)
-                    {
-                        sb.AppendFormat("{0,9}", j == total ? "1" : getVarName(j));
-                    }
+                    sb.AppendLine($"Розв'язувальний рядок:    {FormatVarName(rowVars[rRow], varCount)}");
+                    sb.AppendLine($"Розв'язувальний стовпець: -{FormatVarName(colVars[sCol], varCount)}");
                     sb.AppendLine();
-                    sb.AppendLine(new string('-', 8 + 9 * (total + 1)));
 
-                    for (int i = 0; i <= nC; i++)
-                    {
-                        string rowName = (i == zRow) ? "Z" : getVarName(basis[i]);
-                        sb.AppendFormat("{0,5} | ", rowName);
-                        for (int j = 0; j <= total; j++)
-                        {
-                            if (Math.Abs(T[i, j]) >= BIG_M / 10)
-                                sb.AppendFormat("{0,9}", T[i, j] > 0 ? "M" : "-M");
-                            else
-                                sb.AppendFormat("{0,9:F2}", T[i, j]);
-                        }
-                        sb.AppendLine();
-                    }
-                    sb.AppendLine();
-                };
+                    // 4. Процедура МЖВ
+                    table = MJV_Procedure(table, rRow, sCol);
 
-                sb.AppendLine("Вхідна симплекс-таблиця:");
-                logTableau();
+                    // 6. Зміна змінних у «шапці»
+                    int temp = rowVars[rRow];
+                    rowVars[rRow] = colVars[sCol];
+                    colVars[sCol] = temp;
 
-                for (int iter = 0; iter < 1000; iter++)
-                {
-                    int s = -1;
-                    if (isMax)
-                    {
-                        double minVal = -1e-9;
-                        for (int j = 0; j < total; j++)
-                            if (T[zRow, j] < minVal) { minVal = T[zRow, j]; s = j; }
-                    }
-                    else
-                    {
-                        double maxVal = 1e-9;
-                        for (int j = 0; j < total; j++)
-                            if (T[zRow, j] > maxVal) { maxVal = T[zRow, j]; s = j; }
-                    }
-
-                    if (s == -1) break; // Оптимум знайдено
-
-                    int r = -1;
-                    double minRatio = double.MaxValue;
-                    for (int i = 0; i < nC; i++)
-                    {
-                        if (T[i, s] > 1e-9)
-                        {
-                            double ratio = T[i, total] / T[i, s];
-                            if (ratio < minRatio) { minRatio = ratio; r = i; }
-                        }
-                    }
-                    if (r == -1)
-                    {
-                        sb.AppendLine("Задача необмежена.");
-                        throw new Exception("Задача необмежена.");
-                    }
-
-                    // Логуємо поточний крок
-                    sb.AppendLine($"Пошук опорного розв'язку (Ітерація {iter + 1}):");
-                    sb.AppendLine($"Розв'язувальний рядок:   {getVarName(basis[r])}");
-                    sb.AppendLine($"Розв'язувальний стовпець: {getVarName(s)}\n");
-
-                    T = MjeStep(T, r, s, nC + 1, total + 1);
-                    basis[r] = s;
-
-                    logTableau();
+                    sb.Append(PrintTableToLog(table, rowVars, colVars, varCount));
                 }
-
-                // Перевірка на допустимість (штучні змінні мають бути 0)
-                for (int i = 0; i < nC; i++)
-                    if (basis[i] >= nVars + nSlack && Math.Abs(T[i, total]) > 1e-6)
-                    {
-                        sb.AppendLine("Система обмежень несумісна.");
-                        throw new Exception("Система обмежень несумісна.");
-                    }
-
-                double[] X = new double[nVars];
-                for (int i = 0; i < nC; i++)
-                    if (basis[i] < nVars) X[basis[i]] = T[i, total];
-
-                optZ = T[zRow, total]; // Значення Z беремо прямо з таблиці
-
-                // Логуємо фінальний результат
-                sb.AppendLine("Знайдено оптимальний розв'язок:");
-                sb.Append("X = (");
-                for (int i = 0; i < nVars; i++)
-                {
-                    sb.Append($"{X[i]:F2}");
-                    if (i < nVars - 1) sb.Append("; ");
-                }
-                sb.AppendLine(")\n");
-                sb.AppendLine($"{(isMax ? "Max" : "Min")} (Z) = {optZ:F2}");
-
-                log = sb.ToString();
-                return X;
             }
 
+            /// <summary>
+            /// Алгоритм пошуку оптимального розв'язку 
+            /// </summary>
+            public static double[,] FindOptimalSolution(double[,] table, ref int[] rowVars, ref int[] colVars, int varCount, out string log)
+            {
+                StringBuilder sb = new StringBuilder();
+                sb.AppendLine("--- Пошук оптимального розв'язку ---");
+                int iteration = 0;
+
+                while (true)
+                {
+                    iteration++;
+                    int rows = table.GetLength(0);
+                    int cols = table.GetLength(1);
+                    int zRowIdx = rows - 1;
+                    int rhsCol = cols - 1;
+                    int sCol = -1;
+
+                    // Шукаємо від'ємний елемент у Z-рядку
+                    for (int j = 0; j < cols - 1; j++)
+                    {
+                        if (table[zRowIdx, j] < -1e-9) { sCol = j; break; }
+                    }
+
+                    // Немає від'ємних -> оптимум знайдено
+                    if (sCol == -1)
+                    {
+                        //sb.AppendLine("Оптимальний розв'язок знайдено.");
+                        log = sb.ToString();
+                        return table;
+                    }
+
+                    // Мінімальне невід'ємне відношення -> розв'язувальний рядок
+                    double minRatio = double.MaxValue;
+                    int rRow = -1;
+                    for (int i = 0; i < rows - 1; i++)
+                    {
+                        if (table[i, sCol] > 1e-9)
+                        {
+                            double ratio = table[i, rhsCol] / table[i, sCol];
+                            if (ratio >= 0 && ratio < minRatio)
+                            {
+                                minRatio = ratio;
+                                rRow = i;
+                            }
+                        }
+                    }
+
+                    if (rRow == -1)
+                    {
+                        sb.AppendLine("Функція мети не обмежена.");
+                        log = sb.ToString();
+                        throw new Exception("Функція мети не обмежена.");
+                        //return null;
+                    }
+
+                    sb.AppendLine($"Розв'язувальний рядок:    {FormatVarName(rowVars[rRow], varCount)}");
+                    sb.AppendLine($"Розв'язувальний стовпець: -{FormatVarName(colVars[sCol], varCount)}");
+                    sb.AppendLine();
+
+                    table = MJV_Procedure(table, rRow, sCol);
+
+                    int temp = rowVars[rRow];
+                    rowVars[rRow] = colVars[sCol];
+                    colVars[sCol] = temp;
+
+                    sb.Append(PrintTableToLog(table, rowVars, colVars, varCount));
+                }
+            }
+
+            public static string FormatVarName(int index, int varCount)
+            {
+                // Якщо індекс від 1 до varCount - це змінні x
+                if (index >= 1 && index <= varCount) return "x" + index;
+                // Якщо індекс більший за varCount - це додаткові змінні y (slack variables)
+                if (index > varCount) return "y" + (index - varCount);
+                // На випадок, якщо ви використовуєте від'ємні індекси для y
+                if (index < 0) return "y" + Math.Abs(index);
+                return "?";
+            }
+
+            public static string PrintTableToLog(double[,] table, int[] rowVars, int[] colVars, int varCount)
+            {
+                StringBuilder sb = new StringBuilder();
+                int rows = table.GetLength(0);
+                int cols = table.GetLength(1);
+
+                // Шапка таблиці (-x1, -x2... 1)
+                sb.Append("      ");
+                for (int j = 0; j < cols - 1; j++)
+                {
+                    string colName = FormatVarName(colVars[j], varCount);
+                    sb.Append($"{("-" + colName),10}");
+                }
+                sb.AppendLine($"{"1",10}");
+                sb.AppendLine(new string('-', 8 + 10 * cols));
+
+                // Рядки таблиці
+                for (int i = 0; i < rows - 1; i++)
+                {
+                    string rowName = FormatVarName(rowVars[i], varCount);
+                    sb.Append($"{rowName,-3} =");
+                    for (int j = 0; j < cols; j++)
+                    {
+                        sb.Append($"{table[i, j],10:F2}");
+                    }
+                    sb.AppendLine();
+                }
+
+                // Z-рядок
+                sb.Append("Z   =");
+                for (int j = 0; j < cols; j++)
+                {
+                    sb.Append($"{table[rows - 1, j],10:F2}");
+                }
+                sb.AppendLine();
+                sb.AppendLine();
+
+                return sb.ToString();
+            }
+
+            public static string GetXVectorString(double[,] table, int[] rowVars, int[] colVars, int varCount)
+            {
+                int rows = table.GetLength(0);
+                int cols = table.GetLength(1);
+                int rhsCol = cols - 1;
+                double[] xValues = new double[varCount];
+
+                for (int i = 0; i < rows - 1; i++)
+                {
+                    int varIndex = rowVars[i];
+                    if (varIndex >= 1 && varIndex <= varCount) xValues[varIndex - 1] = table[i, rhsCol];
+                }
+
+                var formatted = xValues.Select(v => v.ToString("F2"));
+                return $"X = ({string.Join("; ", formatted)})";
+            }
         }
     }
 }
