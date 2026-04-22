@@ -418,48 +418,53 @@ namespace ASSPR_1
                 int m = constraints.Count; // Кількість обмежень
                 int n = varCount;          // Кількість змінних
                 double[,] table = new double[m + 1, n + 1];
-
                 rowVars = new int[m + 1]; // Індекси змінних зліва (базис: y1, y2...)
                 colVars = new int[n + 1]; // Індекси змінних зверху (x1, x2...)
-
                 // 1. Заповнюємо обмеження (рядки y1, y2...)
                 for (int i = 0; i < m; i++)
                 {
                     double[] coeffs = ParseLine(constraints[i], n, out string sign, out double rhs);
 
-                    rowVars[i] = -(i + 1); // Позначаємо базисні змінні як -1, -2 (y1, y2)
+                    double mult;
+                    bool isEquality = sign == "=";
 
+                    if (sign == "<=")
+                        mult = 1;
+                    else if (sign == ">=")
+                        mult = -1;
+                    else // "="
+                        mult = 1;
+
+                    // Спочатку записуємо з урахуванням знаку нерівності
                     for (int j = 0; j < n; j++)
+                        table[i, j] = coeffs[j] * mult;
+                    table[i, n] = rhs * mult;
+
+                    // Якщо вільний член від'ємний — множимо весь рядок на -1
+                    if (table[i, n] < 0)
                     {
-                        // Записуємо коефіцієнти x1...xn у стовпці 0...(n-1)
-                        table[i, j] = (sign == "<=") ? coeffs[j] : -coeffs[j];
+                        for (int j = 0; j <= n; j++)
+                            table[i, j] *= -1;
                     }
 
-                    // Вільний член (RHS) ставимо в ОСТАННІЙ стовпець (індекс n)
-                    table[i, n] = (sign == "<=") ? rhs : -rhs;
+                    // Мітка рядка: 0-рядок для рівності, -i для нерівності
+                    rowVars[i] = isEquality ? 0 : -(i + 1);
                 }
-
                 // 2. Заповнюємо цільову функцію Z (останній рядок)
                 double[] zCoeffs = ParseLine(zFunc, n, out string dummySign, out double dummyRhs);
-
                 rowVars[m] = 0; // Мітка для Z-рядка
-
                 for (int j = 0; j < n; j++)
                 {
                     // Синхронізуємо індекси colVars зі стовпцями матриці
                     colVars[j] = (j + 1); // Змінні x1, x2...
-
                     double c = zCoeffs[j];
                     // Записуємо в j-тий стовпець
                     table[m, j] = isMin ? c : -c;
                 }
-
                 // Задаємо початкове значення цільової функції (зазвичай 0) в останній стовпець
                 table[m, n] = 0;
-
                 // Мітка для стовпця вільних членів (опціонально, залежить від вашої логіки)
                 colVars[n] = 0;
-
                 return table;
             }
 
@@ -712,6 +717,192 @@ namespace ASSPR_1
 
                 var formatted = xValues.Select(v => v.ToString("F2"));
                 return $"X = ({string.Join("; ", formatted)})";
+            }
+
+
+            //Part_C
+
+            /// <summary>
+            /// Алгоритм видалення 0-рядків симплекс-таблиці (Рисунок 3.2)
+            /// Повертає false, якщо система обмежень є суперечливою
+            /// </summary>
+            public static bool EliminateZeroRows(
+                ref double[,] table,
+                ref int[] rowVars,
+                ref int[] colVars)
+            {
+                while (true)
+                {
+                    // ── Крок 1: Пошук 0-рядка ──────────────────────────────────────────
+                    int zeroRow = -1;
+                    int rowCount = table.GetLength(0);
+                    int colCount = table.GetLength(1);
+
+                    for (int i = 0; i < rowCount - 1; i++) // без Z-рядка
+                    {
+                        if (rowVars[i] == 0)
+                        {
+                            zeroRow = i;
+                            break;
+                        }
+                    }
+
+                    // Немає 0-рядка → завершення (вихід "Ні" з першого ромба)
+                    if (zeroRow == -1)
+                        return true;
+
+                    // ── Крок 2: Пошук додатного елемента в 0-рядку → розв'язувальний стовпець
+                    int pivotCol = -1;
+                    for (int j = 0; j < colCount - 1; j++) // без стовпця вільних членів
+                    {
+                        if (colVars[j] != 0 && table[zeroRow, j] > 1e-9)
+                        {
+                            pivotCol = j;
+                            break;
+                        }
+                    }
+
+                    // Немає додатного елемента → система суперечлива (вихід "Ні" з другого ромба)
+                    if (pivotCol == -1)
+                    {
+                        Console.WriteLine("Система обмежень є суперечливою.");
+                        return false;
+                    }
+
+                    // ── Крок 3: Розрахунок мінімального невід'ємного відношення → розв'язувальний рядок
+                    int pivotRow = -1;
+                    double minRatio = double.MaxValue;
+
+                    for (int i = 0; i < rowCount - 1; i++)
+                    {
+                        if (table[i, pivotCol] > 1e-9)
+                        {
+                            double ratio = table[i, colCount - 1] / table[i, pivotCol];
+                            if (ratio < minRatio - 1e-9)
+                            {
+                                minRatio = ratio;
+                                pivotRow = i;
+                            }
+                        }
+                    }
+
+                    // Якщо всі елементи в стовпці ≤ 0 — система необмежена/суперечлива
+                    if (pivotRow == -1)
+                    {
+                        Console.WriteLine("Система обмежень є суперечливою.");
+                        return false;
+                    }
+
+                    // ── Крок 4: Процедура МЖВ (Jordan elimination / pivot) ─────────────
+                    PerformPivot(ref table, pivotRow, pivotCol, ref rowVars, ref colVars);
+
+                    // ── Крок 5: Викреслити 0-стовпець ──────────────────────────────────
+                    // Після МЖВ colVars[pivotCol] отримав значення 0 (колишній rowVars зeroRow)
+                    // Знаходимо і видаляємо цей стовпець
+                    int zeroCol = -1;
+                    for (int j = 0; j < colVars.Length; j++)
+                    {
+                        if (colVars[j] == 0)
+                        {
+                            zeroCol = j;
+                            break;
+                        }
+                    }
+
+                    if (zeroCol != -1)
+                    {
+                        table = RemoveColumn(table, zeroCol);
+                        colVars = RemoveAtIndex(colVars, zeroCol);
+                    }
+
+                    // Повертаємось на початок циклу — шукаємо наступний 0-рядок
+                }
+            }
+
+            // ── Допоміжні методи ────────────────────────────────────────────────────────
+
+            private static void PerformPivot(
+                ref double[,] table, int pivotRow, int pivotCol,
+                ref int[] rowVars, ref int[] colVars)
+            {
+                int rows = table.GetLength(0);
+                int cols = table.GetLength(1);
+                double pivotVal = table[pivotRow, pivotCol];
+
+                // Ділимо розв'язувальний рядок на опорний елемент
+                for (int j = 0; j < cols; j++)
+                    table[pivotRow, j] /= pivotVal;
+
+                // Обнуляємо решту рядків у розв'язувальному стовпці
+                for (int i = 0; i < rows; i++)
+                {
+                    if (i == pivotRow) continue;
+                    double factor = table[i, pivotCol];
+                    if (Math.Abs(factor) < 1e-12) continue;
+                    for (int j = 0; j < cols; j++)
+                        table[i, j] -= factor * table[pivotRow, j];
+                }
+
+                // Оновлюємо мітки: змінна зі стовпця входить у базис рядка
+                int temp = rowVars[pivotRow];
+                rowVars[pivotRow] = colVars[pivotCol];
+                colVars[pivotCol] = temp; // тут опиниться 0, якщо pivotRow був 0-рядком
+            }
+
+            private static double[,] RemoveColumn(double[,] table, int colIndex)
+            {
+                int rows = table.GetLength(0);
+                int cols = table.GetLength(1);
+                double[,] result = new double[rows, cols - 1];
+                for (int i = 0; i < rows; i++)
+                {
+                    int destJ = 0;
+                    for (int j = 0; j < cols; j++)
+                    {
+                        if (j == colIndex) continue;
+                        result[i, destJ++] = table[i, j];
+                    }
+                }
+                return result;
+            }
+
+            private static int[] RemoveAtIndex(int[] arr, int index)
+            {
+                int[] result = new int[arr.Length - 1];
+                int dest = 0;
+                for (int i = 0; i < arr.Length; i++)
+                {
+                    if (i == index) continue;
+                    result[dest++] = arr[i];
+                }
+                return result;
+            }
+
+            /// <summary>
+            /// Допоміжний метод для викреслювання стовпця з матриці
+            /// </summary>
+            private static double[,] RemoveColumn(double[,] matrix, int colToRemove, ref int[] colVars)
+            {
+                int rows = matrix.GetLength(0);
+                int cols = matrix.GetLength(1);
+                double[,] newMatrix = new double[rows, cols - 1];
+                int[] newColVars = new int[cols - 1];
+
+                int destCol = 0;
+                for (int j = 0; j < cols; j++)
+                {
+                    if (j == colToRemove) continue; // Пропускаємо стовпець, який треба видалити
+
+                    newColVars[destCol] = colVars[j];
+                    for (int i = 0; i < rows; i++)
+                    {
+                        newMatrix[i, destCol] = matrix[i, j];
+                    }
+                    destCol++;
+                }
+
+                colVars = newColVars; // Оновлюємо масив змінних-стовпців
+                return newMatrix;
             }
         }
     }

@@ -316,7 +316,7 @@ namespace ASSPR_1
                     MessageBoxButtons.OK, MessageBoxIcon.Error);
             }
 
-            
+
         }
 
         //Common
@@ -371,6 +371,100 @@ namespace ASSPR_1
             double zRaw = table[zRowIdx, rhsCol];
             double zValue = isMin ? -zRaw : zRaw;
             txtZ.Text = $"Z = {zValue:F1}";
+        }
+
+        private void numericUpDown1_ValueChanged(object sender, EventArgs e)
+        {
+
+        }
+
+        private void txtY_TextChanged(object sender, EventArgs e)
+        {
+
+        }
+
+        //Part_C
+
+        private void btnSolveLP_C_Click(object sender, EventArgs e)
+        {
+            // 1. Підготовка даних
+            int varCount = (int)nudVarCount_C.Value;
+            bool isMin = rbMin_C.Checked;
+            List<string> constraintLines = new List<string>(); 
+            foreach (DataGridViewRow row in dgvConstraints_C.Rows)
+            {
+                if (row.Cells[0].Value != null)
+                    constraintLines.Add(row.Cells[0].Value.ToString());
+            }
+            string zExpr = txtZ_C.Text;
+            int[] rowVars, colVars;
+
+            // Крок "Уведення даних у симплекс-таблицю"
+            double[,] table = MathHelper.BuildInitialTable(zExpr, constraintLines, varCount, isMin, out rowVars, out colVars);
+
+            StringBuilder fullLog = new StringBuilder();
+
+            // Крок "Видалення 0-рядків"
+
+            //---------------------------------------------------------------------------------
+            //TODO: ВИДАЛЕННЯ 0-рядків НЕПРАВИЛЬНЕ. ВСЕ ДОО ЦЬОГО МОМЕНТУ ОК
+            //---------------------------------------------------------------------------------
+
+            string stepLog;
+            //table = MathHelper.RemoveZeroRows(table, ref rowVars, ref colVars, out stepLog);
+            MathHelper.EliminateZeroRows(ref table, ref rowVars, ref colVars);
+            //fullLog.AppendLine(stepLog);
+
+            if (table == null)
+            {
+                //txtFullLog= fullLog.ToString();
+                MessageBox.Show("Система суперечлива на етапі видалення 0-рядків.");
+                return;
+            }
+
+            // Крок "Пошук опорного розв'язку"
+            table = MathHelper.FindFeasibleSolution(table, ref rowVars, ref colVars, varCount, out stepLog);
+            fullLog.AppendLine(stepLog);
+
+            if (table == null)
+            {
+                //txtFullLog.Text = fullLog.ToString();
+                MessageBox.Show("Опорний розв'язок не знайдено (система суперечлива).");
+                return;
+            }
+
+            // Крок "Пошук оптимального розв'язку"
+            table = MathHelper.FindOptimalSolution(table, ref rowVars, ref colVars, varCount, out stepLog);
+            fullLog.AppendLine(stepLog);
+
+            if (table == null)
+            {
+                //txtFullLog.Text = fullLog.ToString();
+                MessageBox.Show("Функція мети не обмежена знизу.");
+                return;
+            }
+
+            // Крок "Виведення значень"
+            DisplayFinalResult(table, rowVars, colVars, varCount, isMin, txtX_C, txtY_C);
+            //txtFullLog.Text = fullLog.ToString();
+
+            SaveLogToFile(fullLog.ToString());
+        }
+
+        private void btnExample_C_Click(object sender, EventArgs e)
+        {
+            nudVarCount_C.Value = 4;
+            txtZ_C.Text = "10x1-x2-42x3-52x4";
+            rbMin_C.Checked = false;
+
+            dgvConstraints_C.Rows.Clear();
+            dgvConstraints_C.Rows.Add("-2x1+x2+x3+3x4=2");
+            dgvConstraints_C.Rows.Add("-3x1+2x2-3x3=7");
+            dgvConstraints_C.Rows.Add("-3x1+x2+4x3+x4<=1");
+            dgvConstraints_C.Rows.Add("3x1-2x2+2x3-2x4<=-9");
+
+            txtX_C.Text = "";
+            txtY_C.Text = "";
         }
     }
 }
