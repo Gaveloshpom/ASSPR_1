@@ -412,7 +412,7 @@ namespace ASSPR_1
 
             string stepLog;
             //table = MathHelper.RemoveZeroRows(table, ref rowVars, ref colVars, out stepLog);
-            MathHelper.EliminateZeroRows(ref table, ref rowVars, ref colVars);
+            MathHelper.RemoveZeroRows(ref table, ref rowVars, ref colVars);
             //fullLog.AppendLine(stepLog);
 
             if (table == null)

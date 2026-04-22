@@ -441,11 +441,11 @@ namespace ASSPR_1
                     table[i, n] = rhs * mult;
 
                     // Якщо вільний член від'ємний — множимо весь рядок на -1
-                    if (table[i, n] < 0)
-                    {
-                        for (int j = 0; j <= n; j++)
-                            table[i, j] *= -1;
-                    }
+                    //if (table[i, n] < 0)
+                    //{
+                    //    for (int j = 0; j <= n; j++)
+                    //        table[i, j] *= -1;
+                    //}
 
                     // Мітка рядка: 0-рядок для рівності, -i для нерівності
                     rowVars[i] = isEquality ? 0 : -(i + 1);
@@ -726,59 +726,61 @@ namespace ASSPR_1
             /// Алгоритм видалення 0-рядків симплекс-таблиці (Рисунок 3.2)
             /// Повертає false, якщо система обмежень є суперечливою
             /// </summary>
-            public static bool EliminateZeroRows(
-                ref double[,] table,
-                ref int[] rowVars,
-                ref int[] colVars)
+            /// <summary>
+            /// Алгоритм видалення 0-рядків симплекс-таблиці (Рис. 3.2)
+            /// </summary>
+            public static void RemoveZeroRows(ref double[,] table, ref int[] rowVars, ref int[] colVars)
             {
                 while (true)
                 {
-                    // ── Крок 1: Пошук 0-рядка ──────────────────────────────────────────
-                    int zeroRow = -1;
-                    int rowCount = table.GetLength(0);
-                    int colCount = table.GetLength(1);
+                    // Динамічно визначаємо кількість рядків і стовпців, 
+                    // оскільки таблиця може зменшуватись після викреслювання 0-стовпця
+                    int m = table.GetLength(0) - 1; // Індекс рядка Z
+                    int n = table.GetLength(1) - 1; // Індекс стовпця вільних членів
 
-                    for (int i = 0; i < rowCount - 1; i++) // без Z-рядка
+                    // 1. Пошук 0-рядка в симплекс-таблиці
+                    int zeroRowIndex = -1;
+                    for (int i = 0; i < m; i++)
                     {
-                        if (rowVars[i] == 0)
+                        if (rowVars[i] == 0) // Значення 0 означає рівність (штучний базис)
                         {
-                            zeroRow = i;
-                            break;
+                            zeroRowIndex = i;
+                            break; // Беремо перший-ліпший 0-рядок
                         }
                     }
 
-                    // Немає 0-рядка → завершення (вихід "Ні" з першого ромба)
-                    if (zeroRow == -1)
-                        return true;
+                    // Є 0-рядок? Ні -> Завершення
+                    if (zeroRowIndex == -1)
+                        break;
 
-                    // ── Крок 2: Пошук додатного елемента в 0-рядку → розв'язувальний стовпець
+                    // 2. Пошук додатного елемента в 0-рядку -> розв'язувальний стовпець
                     int pivotCol = -1;
-                    for (int j = 0; j < colCount - 1; j++) // без стовпця вільних членів
+                    for (int j = 0; j < n; j++)
                     {
-                        if (colVars[j] != 0 && table[zeroRow, j] > 1e-9)
+                        if (table[zeroRowIndex, j] > 0)
                         {
                             pivotCol = j;
                             break;
                         }
                     }
 
-                    // Немає додатного елемента → система суперечлива (вихід "Ні" з другого ромба)
+                    // Є додатний елемент у 0-рядку? Ні -> Система суперечлива
                     if (pivotCol == -1)
                     {
-                        Console.WriteLine("Система обмежень є суперечливою.");
-                        return false;
+                        throw new Exception("Система обмежень є суперечливою (немає додатних елементів у 0-рядку).");
                     }
 
-                    // ── Крок 3: Розрахунок мінімального невід'ємного відношення → розв'язувальний рядок
+                    // 3. Розрахунок мінімального невід'ємного -> розв'язувальний рядок
                     int pivotRow = -1;
                     double minRatio = double.MaxValue;
 
-                    for (int i = 0; i < rowCount - 1; i++)
+                    for (int i = 0; i < m; i++)
                     {
-                        if (table[i, pivotCol] > 1e-9)
+                        if (table[i, pivotCol] > 0)
                         {
-                            double ratio = table[i, colCount - 1] / table[i, pivotCol];
-                            if (ratio < minRatio - 1e-9)
+                            // Відношення вільного члена до елемента розв'язувального стовпця
+                            double ratio = table[i, n] / table[i, pivotCol];
+                            if (ratio >= 0 && ratio < minRatio)
                             {
                                 minRatio = ratio;
                                 pivotRow = i;
@@ -786,123 +788,59 @@ namespace ASSPR_1
                         }
                     }
 
-                    // Якщо всі елементи в стовпці ≤ 0 — система необмежена/суперечлива
+                    // Якщо з якихось причин (через похибки) мінімальний не знайдено, 
+                    // примусово робимо розв'язувальним сам 0-рядок (бо там є додатний елемент)
                     if (pivotRow == -1)
                     {
-                        Console.WriteLine("Система обмежень є суперечливою.");
-                        return false;
+                        pivotRow = zeroRowIndex;
                     }
 
-                    // ── Крок 4: Процедура МЖВ (Jordan elimination / pivot) ─────────────
-                    PerformPivot(ref table, pivotRow, pivotCol, ref rowVars, ref colVars);
+                    // 4. Процедура МЖВ (Метод Жорданових Виключень)
+                    //PerformMZhV(ref table, ref rowVars, ref colVars, pivotRow, pivotCol);
+                    table = MJV_Procedure(table, pivotRow, pivotCol);
 
-                    // ── Крок 5: Викреслити 0-стовпець ──────────────────────────────────
-                    // Після МЖВ colVars[pivotCol] отримав значення 0 (колишній rowVars зeroRow)
-                    // Знаходимо і видаляємо цей стовпець
-                    int zeroCol = -1;
-                    for (int j = 0; j < colVars.Length; j++)
+                    int temp = rowVars[pivotRow];
+                    rowVars[pivotRow] = colVars[pivotCol];
+                    colVars[pivotCol] = temp;
+
+                    // 5. У симплекс-таблиці викреслюють 0-стовпець
+                    // Якщо 0-рядок залишив базис (став стовпцем), мітка стовпця стане 0
+                    if (colVars[pivotCol] == 0)
                     {
-                        if (colVars[j] == 0)
-                        {
-                            zeroCol = j;
-                            break;
-                        }
+                        RemoveColumn(ref table, ref colVars, pivotCol);
                     }
-
-                    if (zeroCol != -1)
-                    {
-                        table = RemoveColumn(table, zeroCol);
-                        colVars = RemoveAtIndex(colVars, zeroCol);
-                    }
-
-                    // Повертаємось на початок циклу — шукаємо наступний 0-рядок
                 }
             }
 
-            // ── Допоміжні методи ────────────────────────────────────────────────────────
-
-            private static void PerformPivot(
-                ref double[,] table, int pivotRow, int pivotCol,
-                ref int[] rowVars, ref int[] colVars)
+            // Процедура викреслювання стовпця (створює новий зменшений масив)
+            private static void RemoveColumn(ref double[,] table, ref int[] colVars, int colToRemove)
             {
                 int rows = table.GetLength(0);
                 int cols = table.GetLength(1);
-                double pivotVal = table[pivotRow, pivotCol];
 
-                // Ділимо розв'язувальний рядок на опорний елемент
-                for (int j = 0; j < cols; j++)
-                    table[pivotRow, j] /= pivotVal;
-
-                // Обнуляємо решту рядків у розв'язувальному стовпці
-                for (int i = 0; i < rows; i++)
-                {
-                    if (i == pivotRow) continue;
-                    double factor = table[i, pivotCol];
-                    if (Math.Abs(factor) < 1e-12) continue;
-                    for (int j = 0; j < cols; j++)
-                        table[i, j] -= factor * table[pivotRow, j];
-                }
-
-                // Оновлюємо мітки: змінна зі стовпця входить у базис рядка
-                int temp = rowVars[pivotRow];
-                rowVars[pivotRow] = colVars[pivotCol];
-                colVars[pivotCol] = temp; // тут опиниться 0, якщо pivotRow був 0-рядком
-            }
-
-            private static double[,] RemoveColumn(double[,] table, int colIndex)
-            {
-                int rows = table.GetLength(0);
-                int cols = table.GetLength(1);
-                double[,] result = new double[rows, cols - 1];
-                for (int i = 0; i < rows; i++)
-                {
-                    int destJ = 0;
-                    for (int j = 0; j < cols; j++)
-                    {
-                        if (j == colIndex) continue;
-                        result[i, destJ++] = table[i, j];
-                    }
-                }
-                return result;
-            }
-
-            private static int[] RemoveAtIndex(int[] arr, int index)
-            {
-                int[] result = new int[arr.Length - 1];
-                int dest = 0;
-                for (int i = 0; i < arr.Length; i++)
-                {
-                    if (i == index) continue;
-                    result[dest++] = arr[i];
-                }
-                return result;
-            }
-
-            /// <summary>
-            /// Допоміжний метод для викреслювання стовпця з матриці
-            /// </summary>
-            private static double[,] RemoveColumn(double[,] matrix, int colToRemove, ref int[] colVars)
-            {
-                int rows = matrix.GetLength(0);
-                int cols = matrix.GetLength(1);
-                double[,] newMatrix = new double[rows, cols - 1];
+                double[,] newTable = new double[rows, cols - 1];
                 int[] newColVars = new int[cols - 1];
 
-                int destCol = 0;
-                for (int j = 0; j < cols; j++)
+                for (int i = 0; i < rows; i++)
                 {
-                    if (j == colToRemove) continue; // Пропускаємо стовпець, який треба видалити
-
-                    newColVars[destCol] = colVars[j];
-                    for (int i = 0; i < rows; i++)
+                    int destCol = 0;
+                    for (int j = 0; j < cols; j++)
                     {
-                        newMatrix[i, destCol] = matrix[i, j];
+                        if (j == colToRemove) continue; // Пропускаємо стовпець, який треба видалити
+
+                        newTable[i, destCol] = table[i, j];
+
+                        // Копіюємо мітки стовпців лише один раз
+                        if (i == 0)
+                        {
+                            newColVars[destCol] = colVars[j];
+                        }
+                        destCol++;
                     }
-                    destCol++;
                 }
 
-                colVars = newColVars; // Оновлюємо масив змінних-стовпців
-                return newMatrix;
+                table = newTable;
+                colVars = newColVars;
             }
         }
     }
