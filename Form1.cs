@@ -315,8 +315,6 @@ namespace ASSPR_1
                 MessageBox.Show("Помилка: " + ex.Message, "Помилка",
                     MessageBoxButtons.OK, MessageBoxIcon.Error);
             }
-
-
         }
 
         //Common
@@ -387,68 +385,84 @@ namespace ASSPR_1
 
         private void btnSolveLP_C_Click(object sender, EventArgs e)
         {
-            // 1. Підготовка даних
-            int varCount = (int)nudVarCount_C.Value;
-            bool isMin = rbMin_C.Checked;
-            List<string> constraintLines = new List<string>(); 
-            foreach (DataGridViewRow row in dgvConstraints_C.Rows)
+            try
             {
-                if (row.Cells[0].Value != null)
-                    constraintLines.Add(row.Cells[0].Value.ToString());
+                // 1. Збираємо дані з форми
+                string zExpr_С = txtZ_C.Text;
+                int varCount_С = (int)nudVarCount_C.Value;
+                bool isMin_С = rbMin_C.Checked;
+
+                if (string.IsNullOrWhiteSpace(txtZ_C.Text))
+                    throw new Exception("Введіть цільову функцію Z.");
+                if (dgvConstraints_C.Rows.Count == 0)
+                    throw new Exception("Введіть хоча б одне обмеження.");
+
+                List<string> constraintLines = new List<string>();
+                foreach (DataGridViewRow row in dgvConstraints_C.Rows)
+                {
+                    if (row.Cells[0].Value != null)
+                        constraintLines.Add(row.Cells[0].Value.ToString());
+                }
+
+                StringBuilder fullLog = new StringBuilder();
+                fullLog.AppendLine("Згенерований протокол обчислення:\n");
+                fullLog.AppendLine("Постановка задачі:\n");
+                fullLog.AppendLine($"Z = {zExpr_С} -> {(isMin_С ? "min" : "max")}\n");
+                fullLog.AppendLine("при обмеженнях:\n");
+                foreach (var c in constraintLines) fullLog.AppendLine(c);
+                fullLog.AppendLine($"\nx[j]>=0, j=1,{varCount_С}\n");
+
+                // 2. Будуємо початкову таблицю
+                int[] rowVars, colVars;
+                double[,] table = MathHelper.BuildInitialTable(zExpr_С, constraintLines, varCount_С, isMin_С, out rowVars, out colVars);
+                fullLog.AppendLine("Вхідна симплекс-таблиця:");
+                fullLog.Append(MathHelper.PrintTableToLog(table, rowVars, colVars, varCount_С));
+
+                string removeZeroLog;
+                MathHelper.RemoveZeroRows(ref table, ref rowVars, ref colVars, varCount_С, out removeZeroLog);
+                fullLog.Append(removeZeroLog);
+
+                if (table == null)
+                {
+                    //txtFullLog= fullLog.ToString();
+                    MessageBox.Show("Система суперечлива на етапі видалення 0-рядків.");
+                    return;
+                }
+
+                // 3. Шукаємо опорний розв'язок
+                string stepLog;
+                table = MathHelper.FindFeasibleSolution(table, ref rowVars, ref colVars, varCount_С, out stepLog);
+                fullLog.Append(stepLog); // Додаємо лог опорного рішення
+
+                if (table != null)
+                {
+                    fullLog.AppendLine("Знайдено опорний розв'язок:\n");
+                    fullLog.AppendLine(MathHelper.GetXVectorString(table, rowVars, colVars, varCount_С) + "\n");
+
+                    // 4. Шукаємо оптимальний розв'язок
+                    table = MathHelper.FindOptimalSolution(table, ref rowVars, ref colVars, varCount_С, out stepLog);
+                    fullLog.Append(stepLog); // Додаємо лог оптимального рішення
+
+                    if (table != null)
+                    {
+                        fullLog.AppendLine("Знайдено оптимальний розв'язок:\n");
+                        fullLog.AppendLine(MathHelper.GetXVectorString(table, rowVars, colVars, varCount_С) + "\n");
+
+                        double zRaw = table[table.GetLength(0) - 1, table.GetLength(1) - 1];
+                        double zValue = isMin_С ? -zRaw : zRaw;
+                        fullLog.AppendLine($"{(isMin_С ? "Min" : "Max")} (Z) = {zValue:F2}");
+                        DisplayFinalResult(table, rowVars, colVars, varCount_С, isMin_С, txtX_C, txtY_C);
+                    }
+                }
+
+                // Зберігаємо повний сформований лог
+                SaveLogToFile(fullLog.ToString());
             }
-            string zExpr = txtZ_C.Text;
-            int[] rowVars, colVars;
-
-            // Крок "Уведення даних у симплекс-таблицю"
-            double[,] table = MathHelper.BuildInitialTable(zExpr, constraintLines, varCount, isMin, out rowVars, out colVars);
-
-            StringBuilder fullLog = new StringBuilder();
-
-            // Крок "Видалення 0-рядків"
-
-            //---------------------------------------------------------------------------------
-            //TODO: ВИДАЛЕННЯ 0-рядків НЕПРАВИЛЬНЕ. ВСЕ ДОО ЦЬОГО МОМЕНТУ ОК
-            //---------------------------------------------------------------------------------
-
-            string stepLog;
-            //table = MathHelper.RemoveZeroRows(table, ref rowVars, ref colVars, out stepLog);
-            MathHelper.RemoveZeroRows(ref table, ref rowVars, ref colVars);
-            //fullLog.AppendLine(stepLog);
-
-            if (table == null)
+            catch (Exception ex)
             {
-                //txtFullLog= fullLog.ToString();
-                MessageBox.Show("Система суперечлива на етапі видалення 0-рядків.");
-                return;
+                MessageBox.Show("Помилка: " + ex.Message, "Помилка",
+                    MessageBoxButtons.OK, MessageBoxIcon.Error);
             }
-
-            // Крок "Пошук опорного розв'язку"
-            table = MathHelper.FindFeasibleSolution(table, ref rowVars, ref colVars, varCount, out stepLog);
-            fullLog.AppendLine(stepLog);
-
-            if (table == null)
-            {
-                //txtFullLog.Text = fullLog.ToString();
-                MessageBox.Show("Опорний розв'язок не знайдено (система суперечлива).");
-                return;
-            }
-
-            // Крок "Пошук оптимального розв'язку"
-            table = MathHelper.FindOptimalSolution(table, ref rowVars, ref colVars, varCount, out stepLog);
-            fullLog.AppendLine(stepLog);
-
-            if (table == null)
-            {
-                //txtFullLog.Text = fullLog.ToString();
-                MessageBox.Show("Функція мети не обмежена знизу.");
-                return;
-            }
-
-            // Крок "Виведення значень"
-            DisplayFinalResult(table, rowVars, colVars, varCount, isMin, txtX_C, txtY_C);
-            //txtFullLog.Text = fullLog.ToString();
-
-            SaveLogToFile(fullLog.ToString());
         }
 
         private void btnExample_C_Click(object sender, EventArgs e)
@@ -465,6 +479,20 @@ namespace ASSPR_1
 
             txtX_C.Text = "";
             txtY_C.Text = "";
+
+            //nudVarCount_C.Value = 2;
+            //txtZ_C.Text = "-3x1+6x2";
+            //rbMin_C.Checked = false;
+
+            //dgvConstraints_C.Rows.Clear();
+            //dgvConstraints_C.Rows.Add("x1+2x2+1>=0");
+            //dgvConstraints_C.Rows.Add("2x1+x2-4>=0");
+            //dgvConstraints_C.Rows.Add("x1-x2+1>=0");
+            //dgvConstraints_C.Rows.Add("x1-4x2+13>=0");
+            //dgvConstraints_C.Rows.Add("-4x1+x2+23>=0");
+
+            //txtX_C.Text = "";
+            //txtY_C.Text = "";
         }
     }
 }

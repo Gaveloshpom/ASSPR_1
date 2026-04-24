@@ -377,38 +377,97 @@ namespace ASSPR_1
             }
 
             // Метод для витягування коефіцієнтів з рядка типу "2x1 - 3x2 + x4 <= 10"
-            public static double[] ParseLine(string input, int varCount, out string sign, out double rhs)
+            public static double[] ParseLine(string line, int n, out string sign, out double rhs)
             {
-                double[] coeffs = new double[varCount];
+                double[] coeffs = new double[n];
                 rhs = 0;
-                sign = "<=";
+                sign = "="; // За замовчуванням
 
-                // Визначаємо знак і розділяємо на ліву та праву частини
-                if (input.Contains("<=")) sign = "<=";
-                else if (input.Contains(">=")) sign = ">=";
-                else if (input.Contains("=")) sign = "=";
+                // 1. Очищення рядка від пробілів та уніфікація десяткових розділювачів
+                line = line.Replace(" ", "").Replace(",", ".");
 
-                string[] parts = input.Split(new[] { "<=", ">=", "=" }, StringSplitOptions.RemoveEmptyEntries);
-                string lhs = parts[0];
-                if (parts.Length > 1) double.TryParse(parts[1].Trim().Replace('.', ','), out rhs);
-
-                // Регулярний вираз для пошуку [число]x[номер]
-                // Група 1: число (коефіцієнт), Група 2: номер змінної
-                Regex regex = new Regex(@"([+-]?\s*\d*(?:[.,]\d+)?)\s*x(\d+)", RegexOptions.IgnoreCase);
-                MatchCollection matches = regex.Matches(lhs);
-
-                foreach (Match m in matches)
+                // 2. Визначення знаку та розділення на ліву і праву частини
+                string[] parts;
+                if (line.Contains("<="))
                 {
-                    string valStr = m.Groups[1].Value.Replace(" ", "").Replace('.', ',');
-                    int varIdx = int.Parse(m.Groups[2].Value) - 1; // x1 -> індекс 0
-
-                    double coeff = 0;
-                    if (string.IsNullOrEmpty(valStr) || valStr == "+") coeff = 1;
-                    else if (valStr == "-") coeff = -1;
-                    else double.TryParse(valStr, out coeff);
-
-                    if (varIdx < varCount) coeffs[varIdx] = coeff;
+                    sign = "<=";
+                    parts = line.Split(new[] { "<=" }, StringSplitOptions.None);
                 }
+                else if (line.Contains(">="))
+                {
+                    sign = ">=";
+                    parts = line.Split(new[] { ">=" }, StringSplitOptions.None);
+                }
+                else if (line.Contains("="))
+                {
+                    sign = "=";
+                    parts = line.Split('=');
+                }
+                else
+                {
+                    // Якщо знаку немає, вважаємо, що це просто математичний вираз 
+                    // (наприклад, рядок цільової функції з текстового поля)
+                    sign = "none";
+                    parts = new string[] { line };
+                }
+
+                string leftPart = parts[0];
+                string rightPart = parts.Length > 1 ? parts[1] : "0";
+
+                double leftConstant = 0;
+                double rightConstant = 0;
+
+                // 3. Регулярний вираз для пошуку членів рівняння
+                // Група 1: знак і число (напр. "-2.5", "+", "-")
+                // Група 2: змінна з індексом (напр. "x1")
+                // Група 3: тільки індекс змінної (напр. "1")
+                string pattern = @"([+-]?\d*\.?\d*)(x(\d+))?";
+
+                // Допоміжна локальна функція для аналізу частини рівняння
+                void ParseExpression(string expression, bool isLeft)
+                {
+                    var matches = Regex.Matches(expression, pattern);
+                    foreach (Match match in matches)
+                    {
+                        if (string.IsNullOrEmpty(match.Value)) continue;
+
+                        string valStr = match.Groups[1].Value;
+                        string varStr = match.Groups[2].Value;
+                        string idxStr = match.Groups[3].Value;
+
+                        // Визначаємо числове значення коефіцієнта
+                        double val = 0;
+                        if (valStr == "" || valStr == "+") val = 1;
+                        else if (valStr == "-") val = -1;
+                        else double.TryParse(valStr, System.Globalization.NumberStyles.Any, System.Globalization.CultureInfo.InvariantCulture, out val);
+
+                        if (!string.IsNullOrEmpty(varStr)) // Якщо це змінна (є "x")
+                        {
+                            if (int.TryParse(idxStr, out int idx) && idx >= 1 && idx <= n)
+                            {
+                                if (isLeft)
+                                    coeffs[idx - 1] += val; // Залишаємо зліва
+                                else
+                                    coeffs[idx - 1] -= val; // Переносимо з правої частини в ліву (міняємо знак)
+                            }
+                        }
+                        else // Якщо це константа (вільний член без "x")
+                        {
+                            if (isLeft)
+                                leftConstant += val;
+                            else
+                                rightConstant += val;
+                        }
+                    }
+                }
+
+                // 4. Парсимо обидві частини рівняння
+                ParseExpression(leftPart, true);
+                ParseExpression(rightPart, false);
+
+                // 5. Формуємо фінальний вільний член
+                // Усі константи зліва переносимо вправо, тому віднімаємо їх
+                rhs = rightConstant - leftConstant;
 
                 return coeffs;
             }
@@ -723,37 +782,40 @@ namespace ASSPR_1
             //Part_C
 
             /// <summary>
-            /// Алгоритм видалення 0-рядків симплекс-таблиці (Рисунок 3.2)
-            /// Повертає false, якщо система обмежень є суперечливою
-            /// </summary>
-            /// <summary>
             /// Алгоритм видалення 0-рядків симплекс-таблиці (Рис. 3.2)
             /// </summary>
-            public static void RemoveZeroRows(ref double[,] table, ref int[] rowVars, ref int[] colVars)
+            public static void RemoveZeroRows(ref double[,] table, ref int[] rowVars, ref int[] colVars, int varCount, out string logString)
             {
+                StringBuilder sb = new StringBuilder();
+                bool hadZeroRows = false;
+
                 while (true)
                 {
-                    // Динамічно визначаємо кількість рядків і стовпців, 
-                    // оскільки таблиця може зменшуватись після викреслювання 0-стовпця
                     int m = table.GetLength(0) - 1; // Індекс рядка Z
                     int n = table.GetLength(1) - 1; // Індекс стовпця вільних членів
 
-                    // 1. Пошук 0-рядка в симплекс-таблиці
+                    // Пошук 0-рядка в симплекс-таблиці
                     int zeroRowIndex = -1;
                     for (int i = 0; i < m; i++)
                     {
-                        if (rowVars[i] == 0) // Значення 0 означає рівність (штучний базис)
+                        if (rowVars[i] == 0) // Значення 0 означає рівність 
                         {
                             zeroRowIndex = i;
                             break; // Беремо перший-ліпший 0-рядок
                         }
                     }
 
-                    // Є 0-рядок? Ні -> Завершення
+                    // Якщо немає 0-рядків break
                     if (zeroRowIndex == -1)
                         break;
 
-                    // 2. Пошук додатного елемента в 0-рядку -> розв'язувальний стовпець
+                    if (!hadZeroRows)
+                    {
+                        sb.AppendLine("Видалення нуль-рядків:\n");
+                        hadZeroRows = true;
+                    }
+
+                    // Пошук додатного елемента в 0-рядку -> розв'язувальний стовпець
                     int pivotCol = -1;
                     for (int j = 0; j < n; j++)
                     {
@@ -767,10 +829,10 @@ namespace ASSPR_1
                     // Є додатний елемент у 0-рядку? Ні -> Система суперечлива
                     if (pivotCol == -1)
                     {
-                        throw new Exception("Система обмежень є суперечливою (немає додатних елементів у 0-рядку).");
+                        throw new Exception("Система обмежень є суперечливою.");
                     }
 
-                    // 3. Розрахунок мінімального невід'ємного -> розв'язувальний рядок
+                    // Розрахунок мінімального невід'ємного -> розв'язувальний рядок
                     int pivotRow = -1;
                     double minRatio = double.MaxValue;
 
@@ -788,31 +850,36 @@ namespace ASSPR_1
                         }
                     }
 
-                    // Якщо з якихось причин (через похибки) мінімальний не знайдено, 
-                    // примусово робимо розв'язувальним сам 0-рядок (бо там є додатний елемент)
                     if (pivotRow == -1)
                     {
                         pivotRow = zeroRowIndex;
                     }
 
-                    // 4. Процедура МЖВ (Метод Жорданових Виключень)
-                    //PerformMZhV(ref table, ref rowVars, ref colVars, pivotRow, pivotCol);
+                    // МЖВ
                     table = MJV_Procedure(table, pivotRow, pivotCol);
 
                     int temp = rowVars[pivotRow];
                     rowVars[pivotRow] = colVars[pivotCol];
                     colVars[pivotCol] = temp;
 
-                    // 5. У симплекс-таблиці викреслюють 0-стовпець
-                    // Якщо 0-рядок залишив базис (став стовпцем), мітка стовпця стане 0
+                    // Викреслити 0-стовпець
                     if (colVars[pivotCol] == 0)
                     {
                         RemoveColumn(ref table, ref colVars, pivotCol);
                     }
+
+                    sb.Append(PrintTableToLog(table, rowVars, colVars, varCount));
                 }
+
+                if (hadZeroRows)
+                {
+                    sb.AppendLine("Всі нуль-рядки видалено.\n");
+                }
+
+                logString = sb.ToString();
             }
 
-            // Процедура викреслювання стовпця (створює новий зменшений масив)
+            // Процедура викреслювання стовпця 
             private static void RemoveColumn(ref double[,] table, ref int[] colVars, int colToRemove)
             {
                 int rows = table.GetLength(0);
