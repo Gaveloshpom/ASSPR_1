@@ -377,38 +377,97 @@ namespace ASSPR_1
             }
 
             // Метод для витягування коефіцієнтів з рядка типу "2x1 - 3x2 + x4 <= 10"
-            public static double[] ParseLine(string input, int varCount, out string sign, out double rhs)
+            public static double[] ParseLine(string line, int n, out string sign, out double rhs)
             {
-                double[] coeffs = new double[varCount];
+                double[] coeffs = new double[n];
                 rhs = 0;
-                sign = "<=";
+                sign = "="; // За замовчуванням
 
-                // Визначаємо знак і розділяємо на ліву та праву частини
-                if (input.Contains("<=")) sign = "<=";
-                else if (input.Contains(">=")) sign = ">=";
-                else if (input.Contains("=")) sign = "=";
+                // 1. Очищення рядка від пробілів та уніфікація десяткових розділювачів
+                line = line.Replace(" ", "").Replace(",", ".");
 
-                string[] parts = input.Split(new[] { "<=", ">=", "=" }, StringSplitOptions.RemoveEmptyEntries);
-                string lhs = parts[0];
-                if (parts.Length > 1) double.TryParse(parts[1].Trim().Replace('.', ','), out rhs);
-
-                // Регулярний вираз для пошуку [число]x[номер]
-                // Група 1: число (коефіцієнт), Група 2: номер змінної
-                Regex regex = new Regex(@"([+-]?\s*\d*(?:[.,]\d+)?)\s*x(\d+)", RegexOptions.IgnoreCase);
-                MatchCollection matches = regex.Matches(lhs);
-
-                foreach (Match m in matches)
+                // 2. Визначення знаку та розділення на ліву і праву частини
+                string[] parts;
+                if (line.Contains("<="))
                 {
-                    string valStr = m.Groups[1].Value.Replace(" ", "").Replace('.', ',');
-                    int varIdx = int.Parse(m.Groups[2].Value) - 1; // x1 -> індекс 0
-
-                    double coeff = 0;
-                    if (string.IsNullOrEmpty(valStr) || valStr == "+") coeff = 1;
-                    else if (valStr == "-") coeff = -1;
-                    else double.TryParse(valStr, out coeff);
-
-                    if (varIdx < varCount) coeffs[varIdx] = coeff;
+                    sign = "<=";
+                    parts = line.Split(new[] { "<=" }, StringSplitOptions.None);
                 }
+                else if (line.Contains(">="))
+                {
+                    sign = ">=";
+                    parts = line.Split(new[] { ">=" }, StringSplitOptions.None);
+                }
+                else if (line.Contains("="))
+                {
+                    sign = "=";
+                    parts = line.Split('=');
+                }
+                else
+                {
+                    // Якщо знаку немає, вважаємо, що це просто математичний вираз 
+                    // (наприклад, рядок цільової функції з текстового поля)
+                    sign = "none";
+                    parts = new string[] { line };
+                }
+
+                string leftPart = parts[0];
+                string rightPart = parts.Length > 1 ? parts[1] : "0";
+
+                double leftConstant = 0;
+                double rightConstant = 0;
+
+                // 3. Регулярний вираз для пошуку членів рівняння
+                // Група 1: знак і число (напр. "-2.5", "+", "-")
+                // Група 2: змінна з індексом (напр. "x1")
+                // Група 3: тільки індекс змінної (напр. "1")
+                string pattern = @"([+-]?\d*\.?\d*)(x(\d+))?";
+
+                // Допоміжна локальна функція для аналізу частини рівняння
+                void ParseExpression(string expression, bool isLeft)
+                {
+                    var matches = Regex.Matches(expression, pattern);
+                    foreach (Match match in matches)
+                    {
+                        if (string.IsNullOrEmpty(match.Value)) continue;
+
+                        string valStr = match.Groups[1].Value;
+                        string varStr = match.Groups[2].Value;
+                        string idxStr = match.Groups[3].Value;
+
+                        // Визначаємо числове значення коефіцієнта
+                        double val = 0;
+                        if (valStr == "" || valStr == "+") val = 1;
+                        else if (valStr == "-") val = -1;
+                        else double.TryParse(valStr, System.Globalization.NumberStyles.Any, System.Globalization.CultureInfo.InvariantCulture, out val);
+
+                        if (!string.IsNullOrEmpty(varStr)) // Якщо це змінна (є "x")
+                        {
+                            if (int.TryParse(idxStr, out int idx) && idx >= 1 && idx <= n)
+                            {
+                                if (isLeft)
+                                    coeffs[idx - 1] += val; // Залишаємо зліва
+                                else
+                                    coeffs[idx - 1] -= val; // Переносимо з правої частини в ліву (міняємо знак)
+                            }
+                        }
+                        else // Якщо це константа (вільний член без "x")
+                        {
+                            if (isLeft)
+                                leftConstant += val;
+                            else
+                                rightConstant += val;
+                        }
+                    }
+                }
+
+                // 4. Парсимо обидві частини рівняння
+                ParseExpression(leftPart, true);
+                ParseExpression(rightPart, false);
+
+                // 5. Формуємо фінальний вільний член
+                // Усі константи зліва переносимо вправо, тому віднімаємо їх
+                rhs = rightConstant - leftConstant;
 
                 return coeffs;
             }
@@ -418,48 +477,53 @@ namespace ASSPR_1
                 int m = constraints.Count; // Кількість обмежень
                 int n = varCount;          // Кількість змінних
                 double[,] table = new double[m + 1, n + 1];
-
                 rowVars = new int[m + 1]; // Індекси змінних зліва (базис: y1, y2...)
                 colVars = new int[n + 1]; // Індекси змінних зверху (x1, x2...)
-
                 // 1. Заповнюємо обмеження (рядки y1, y2...)
                 for (int i = 0; i < m; i++)
                 {
                     double[] coeffs = ParseLine(constraints[i], n, out string sign, out double rhs);
 
-                    rowVars[i] = -(i + 1); // Позначаємо базисні змінні як -1, -2 (y1, y2)
+                    double mult;
+                    bool isEquality = sign == "=";
 
+                    if (sign == "<=")
+                        mult = 1;
+                    else if (sign == ">=")
+                        mult = -1;
+                    else // "="
+                        mult = 1;
+
+                    // Спочатку записуємо з урахуванням знаку нерівності
                     for (int j = 0; j < n; j++)
-                    {
-                        // Записуємо коефіцієнти x1...xn у стовпці 0...(n-1)
-                        table[i, j] = (sign == "<=") ? coeffs[j] : -coeffs[j];
-                    }
+                        table[i, j] = coeffs[j] * mult;
+                    table[i, n] = rhs * mult;
 
-                    // Вільний член (RHS) ставимо в ОСТАННІЙ стовпець (індекс n)
-                    table[i, n] = (sign == "<=") ? rhs : -rhs;
+                    // Якщо вільний член від'ємний — множимо весь рядок на -1
+                    //if (table[i, n] < 0)
+                    //{
+                    //    for (int j = 0; j <= n; j++)
+                    //        table[i, j] *= -1;
+                    //}
+
+                    // Мітка рядка: 0-рядок для рівності, -i для нерівності
+                    rowVars[i] = isEquality ? 0 : -(i + 1);
                 }
-
                 // 2. Заповнюємо цільову функцію Z (останній рядок)
                 double[] zCoeffs = ParseLine(zFunc, n, out string dummySign, out double dummyRhs);
-
                 rowVars[m] = 0; // Мітка для Z-рядка
-
                 for (int j = 0; j < n; j++)
                 {
                     // Синхронізуємо індекси colVars зі стовпцями матриці
                     colVars[j] = (j + 1); // Змінні x1, x2...
-
                     double c = zCoeffs[j];
                     // Записуємо в j-тий стовпець
                     table[m, j] = isMin ? c : -c;
                 }
-
                 // Задаємо початкове значення цільової функції (зазвичай 0) в останній стовпець
                 table[m, n] = 0;
-
                 // Мітка для стовпця вільних членів (опціонально, залежить від вашої логіки)
                 colVars[n] = 0;
-
                 return table;
             }
 
@@ -650,6 +714,8 @@ namespace ASSPR_1
             {
                 // Якщо індекс від 1 до varCount - це змінні x
                 if (index >= 1 && index <= varCount) return "x" + index;
+                // Змінні s (додаткові обмеження Гоморі), резервуємо індекси > 1000
+                if (index > 1000) return "s" + (index - 1000);
                 // Якщо індекс більший за varCount - це додаткові змінні y (slack variables)
                 if (index > varCount) return "y" + (index - varCount);
                 // На випадок, якщо ви використовуєте від'ємні індекси для y
@@ -712,6 +778,266 @@ namespace ASSPR_1
 
                 var formatted = xValues.Select(v => v.ToString("F2"));
                 return $"X = ({string.Join("; ", formatted)})";
+            }
+
+
+            //Part_C
+
+            /// <summary>
+            /// Алгоритм видалення 0-рядків симплекс-таблиці (Рис. 3.2)
+            /// </summary>
+            public static void RemoveZeroRows(ref double[,] table, ref int[] rowVars, ref int[] colVars, int varCount, out string logString)
+            {
+                StringBuilder sb = new StringBuilder();
+                bool hadZeroRows = false;
+
+                while (true)
+                {
+                    int m = table.GetLength(0) - 1; // Індекс рядка Z
+                    int n = table.GetLength(1) - 1; // Індекс стовпця вільних членів
+
+                    // Пошук 0-рядка в симплекс-таблиці
+                    int zeroRowIndex = -1;
+                    for (int i = 0; i < m; i++)
+                    {
+                        if (rowVars[i] == 0) // Значення 0 означає рівність 
+                        {
+                            zeroRowIndex = i;
+                            break; // Беремо перший-ліпший 0-рядок
+                        }
+                    }
+
+                    // Якщо немає 0-рядків break
+                    if (zeroRowIndex == -1)
+                        break;
+
+                    if (!hadZeroRows)
+                    {
+                        sb.AppendLine("Видалення нуль-рядків:\n");
+                        hadZeroRows = true;
+                    }
+
+                    // Пошук додатного елемента в 0-рядку -> розв'язувальний стовпець
+                    int pivotCol = -1;
+                    for (int j = 0; j < n; j++)
+                    {
+                        if (table[zeroRowIndex, j] > 0)
+                        {
+                            pivotCol = j;
+                            break;
+                        }
+                    }
+
+                    // Є додатний елемент у 0-рядку? Ні -> Система суперечлива
+                    if (pivotCol == -1)
+                    {
+                        throw new Exception("Система обмежень є суперечливою.");
+                    }
+
+                    // Розрахунок мінімального невід'ємного -> розв'язувальний рядок
+                    int pivotRow = -1;
+                    double minRatio = double.MaxValue;
+
+                    for (int i = 0; i < m; i++)
+                    {
+                        if (table[i, pivotCol] > 0)
+                        {
+                            // Відношення вільного члена до елемента розв'язувального стовпця
+                            double ratio = table[i, n] / table[i, pivotCol];
+                            if (ratio >= 0 && ratio < minRatio)
+                            {
+                                minRatio = ratio;
+                                pivotRow = i;
+                            }
+                        }
+                    }
+
+                    if (pivotRow == -1)
+                    {
+                        pivotRow = zeroRowIndex;
+                    }
+
+                    // МЖВ
+                    table = MJV_Procedure(table, pivotRow, pivotCol);
+
+                    int temp = rowVars[pivotRow];
+                    rowVars[pivotRow] = colVars[pivotCol];
+                    colVars[pivotCol] = temp;
+
+                    // Викреслити 0-стовпець
+                    if (colVars[pivotCol] == 0)
+                    {
+                        RemoveColumn(ref table, ref colVars, pivotCol);
+                    }
+
+                    sb.Append(PrintTableToLog(table, rowVars, colVars, varCount));
+                }
+
+                if (hadZeroRows)
+                {
+                    sb.AppendLine("Всі нуль-рядки видалено.\n");
+                }
+
+                logString = sb.ToString();
+            }
+
+            // Процедура викреслювання стовпця 
+            private static void RemoveColumn(ref double[,] table, ref int[] colVars, int colToRemove)
+            {
+                int rows = table.GetLength(0);
+                int cols = table.GetLength(1);
+
+                double[,] newTable = new double[rows, cols - 1];
+                int[] newColVars = new int[cols - 1];
+
+                for (int i = 0; i < rows; i++)
+                {
+                    int destCol = 0;
+                    for (int j = 0; j < cols; j++)
+                    {
+                        if (j == colToRemove) continue; // Пропускаємо стовпець, який треба видалити
+
+                        newTable[i, destCol] = table[i, j];
+
+                        // Копіюємо мітки стовпців лише один раз
+                        if (i == 0)
+                        {
+                            newColVars[destCol] = colVars[j];
+                        }
+                        destCol++;
+                    }
+                }
+
+                table = newTable;
+                colVars = newColVars;
+            }
+
+
+            //Part_D
+            /// <summary>
+            /// Алгоритм Гоморі для розв'язання задачі цілочислового програмування
+            /// </summary>
+            public static double[,] SolveIntegerGomory(double[,] initialTable, ref int[] rowVars, ref int[] colVars, int varCount, out string log)
+            {
+                StringBuilder sb = new StringBuilder();
+                double[,] table = initialTable;
+                int cutCount = 0;
+
+                table = FindFeasibleSolution(table, ref rowVars, ref colVars, varCount, out string feasLog);
+                sb.Append(feasLog);
+                if (table != null)
+                {
+                    sb.AppendLine("Знайдено опорний розв'язок:\n");
+                    sb.AppendLine(GetXVectorString(table, rowVars, colVars, varCount) + "\n");
+                }
+                table = FindOptimalSolution(table, ref rowVars, ref colVars, varCount, out string optLog);
+                sb.Append(optLog);
+                if (table != null)
+                {
+                    sb.AppendLine("Знайдено оптимальний розв'язок:\n");
+                    sb.AppendLine(GetXVectorString(table, rowVars, colVars, varCount) + "\n");
+                }
+
+                while (true)
+                {
+                    int rows = table.GetLength(0);
+                    int cols = table.GetLength(1);
+                    int rhsCol = cols - 1;
+
+                    double maxFrac = -1.0;
+                    int targetRow = -1;
+                    int targetVarIndex = -1;
+
+                    for (int i = 0; i < rows - 1; i++)
+                    {
+                        if (rowVars[i] >= 1 && rowVars[i] <= varCount)
+                        {
+                            double val = table[i, rhsCol];
+                            double frac = val - Math.Floor(val);
+
+                            if (frac > 1e-5 && frac < 1 - 1e-5)
+                            {
+                                if (frac > maxFrac)
+                                {
+                                    maxFrac = frac;
+                                    targetRow = i;
+                                    targetVarIndex = rowVars[i];
+                                }
+                            }
+                        }
+                    }
+
+                    if (targetRow == -1)
+                    {
+                        break;
+                    }
+
+                    cutCount++;
+                    sb.AppendLine($"Знайдено розв'язок, у якому змінні мають дробову частину, максимальна дробова частина у змінної: x{targetVarIndex} = {table[targetRow, rhsCol]:F2}\n");
+
+                    double[,] newTable = new double[rows + 1, cols];
+                    int[] newRowVars = new int[rows + 1];
+
+                    for (int i = 0; i < rows - 1; i++)
+                    {
+                        newRowVars[i] = rowVars[i];
+                        for (int j = 0; j < cols; j++)
+                            newTable[i, j] = table[i, j];
+                    }
+
+                    sb.Append($"Складено додаткове обмеження:\ns{cutCount} = ");
+                    bool isFirst = true;
+
+                    for (int j = 0; j < cols; j++)
+                    {
+                        double val = table[targetRow, j];
+                        double frac = val - Math.Floor(val);
+                        if (Math.Abs(frac) < 1e-5 || Math.Abs(frac - 1) < 1e-5) frac = 0;
+
+                        newTable[rows - 1, j] = -frac;
+
+                        if (j < cols - 1)
+                        {
+                            if (!isFirst) sb.Append(" + ");
+                            sb.AppendFormat("{0:F2} * {1}", frac, FormatVarName(colVars[j], varCount));
+                            isFirst = false;
+                        }
+                        else
+                        {
+                            sb.AppendFormat(" + ({0:F2}) >= 0\n\n", -frac);
+                        }
+                    }
+                    newRowVars[rows - 1] = 1000 + cutCount;
+
+                    newRowVars[rows] = rowVars[rows - 1];
+                    for (int j = 0; j < cols; j++)
+                        newTable[rows, j] = table[rows - 1, j];
+
+                    table = newTable;
+                    rowVars = newRowVars;
+
+                    sb.AppendLine("Симплекс-таблиця з новим обмеженням:");
+                    sb.Append(PrintTableToLog(table, rowVars, colVars, varCount));
+
+                    table = FindFeasibleSolution(table, ref rowVars, ref colVars, varCount, out string feasLog2);
+                    sb.Append(feasLog2);
+                    if (table != null)
+                    {
+                        sb.AppendLine("Знайдено опорний розв'язок:\n");
+                        sb.AppendLine(GetXVectorString(table, rowVars, colVars, varCount) + "\n");
+                    }
+
+                    table = FindOptimalSolution(table, ref rowVars, ref colVars, varCount, out string optLog2);
+                    sb.Append(optLog2);
+                    if (table != null)
+                    {
+                        sb.AppendLine("Знайдено оптимальний розв'язок:\n");
+                        sb.AppendLine(GetXVectorString(table, rowVars, colVars, varCount) + "\n");
+                    }
+                }
+
+                log = sb.ToString();
+                return table;
             }
         }
     }
