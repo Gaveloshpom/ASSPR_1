@@ -86,6 +86,22 @@ namespace ASSPR_1
             rbMin_C = new RadioButton();
             btnSolveLP_C = new Button();
             txtZ_C = new TextBox();
+            Part_D = new TabPage();
+            dgvConstraints_D = new DataGridView();
+            dataGridViewTextBoxColumn2 = new DataGridViewTextBoxColumn();
+            label16 = new Label();
+            txtY_D = new TextBox();
+            label17 = new Label();
+            txtX_D = new TextBox();
+            label18 = new Label();
+            label19 = new Label();
+            label20 = new Label();
+            nudVarCount_D = new NumericUpDown();
+            btnExample_D = new Button();
+            rbMax_D = new RadioButton();
+            rbMin_D = new RadioButton();
+            btnSolveLP_D = new Button();
+            txtZ_D = new TextBox();
             ((System.ComponentModel.ISupportInitialize)dgvMatrixA).BeginInit();
             ((System.ComponentModel.ISupportInitialize)dgvVectorB).BeginInit();
             ((System.ComponentModel.ISupportInitialize)dgvResult).BeginInit();
@@ -99,6 +115,9 @@ namespace ASSPR_1
             Part_C.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)dgvConstraints_C).BeginInit();
             ((System.ComponentModel.ISupportInitialize)nudVarCount_C).BeginInit();
+            Part_D.SuspendLayout();
+            ((System.ComponentModel.ISupportInitialize)dgvConstraints_D).BeginInit();
+            ((System.ComponentModel.ISupportInitialize)nudVarCount_D).BeginInit();
             SuspendLayout();
             // 
             // dgvMatrixA
@@ -297,10 +316,11 @@ namespace ASSPR_1
             tabControl1.Controls.Add(Part_A);
             tabControl1.Controls.Add(Part_B);
             tabControl1.Controls.Add(Part_C);
+            tabControl1.Controls.Add(Part_D);
             tabControl1.Location = new Point(-3, 25);
             tabControl1.Name = "tabControl1";
             tabControl1.SelectedIndex = 0;
-            tabControl1.Size = new Size(825, 479);
+            tabControl1.Size = new Size(827, 479);
             tabControl1.TabIndex = 17;
             // 
             // Part_A
@@ -325,7 +345,7 @@ namespace ASSPR_1
             Part_A.Location = new Point(4, 24);
             Part_A.Name = "Part_A";
             Part_A.Padding = new Padding(3);
-            Part_A.Size = new Size(817, 451);
+            Part_A.Size = new Size(819, 451);
             Part_A.TabIndex = 0;
             Part_A.Text = "Part_A";
             // 
@@ -348,7 +368,7 @@ namespace ASSPR_1
             Part_B.Location = new Point(4, 24);
             Part_B.Name = "Part_B";
             Part_B.Padding = new Padding(3);
-            Part_B.Size = new Size(817, 451);
+            Part_B.Size = new Size(819, 451);
             Part_B.TabIndex = 1;
             Part_B.Text = "Part_B";
             Part_B.UseVisualStyleBackColor = true;
@@ -507,7 +527,7 @@ namespace ASSPR_1
             Part_C.Controls.Add(txtZ_C);
             Part_C.Location = new Point(4, 24);
             Part_C.Name = "Part_C";
-            Part_C.Size = new Size(817, 451);
+            Part_C.Size = new Size(819, 451);
             Part_C.TabIndex = 2;
             Part_C.Text = "Part_C";
             Part_C.UseVisualStyleBackColor = true;
@@ -648,6 +668,165 @@ namespace ASSPR_1
             txtZ_C.Size = new Size(210, 23);
             txtZ_C.TabIndex = 16;
             // 
+            // Part_D
+            // 
+            Part_D.Controls.Add(dgvConstraints_D);
+            Part_D.Controls.Add(label16);
+            Part_D.Controls.Add(txtY_D);
+            Part_D.Controls.Add(label17);
+            Part_D.Controls.Add(txtX_D);
+            Part_D.Controls.Add(label18);
+            Part_D.Controls.Add(label19);
+            Part_D.Controls.Add(label20);
+            Part_D.Controls.Add(nudVarCount_D);
+            Part_D.Controls.Add(btnExample_D);
+            Part_D.Controls.Add(rbMax_D);
+            Part_D.Controls.Add(rbMin_D);
+            Part_D.Controls.Add(btnSolveLP_D);
+            Part_D.Controls.Add(txtZ_D);
+            Part_D.Location = new Point(4, 24);
+            Part_D.Name = "Part_D";
+            Part_D.Padding = new Padding(3);
+            Part_D.Size = new Size(819, 451);
+            Part_D.TabIndex = 3;
+            Part_D.Text = "Part_D";
+            Part_D.UseVisualStyleBackColor = true;
+            // 
+            // dgvConstraints_D
+            // 
+            dgvConstraints_D.ColumnHeadersHeightSizeMode = DataGridViewColumnHeadersHeightSizeMode.AutoSize;
+            dgvConstraints_D.Columns.AddRange(new DataGridViewColumn[] { dataGridViewTextBoxColumn2 });
+            dgvConstraints_D.Location = new Point(34, 111);
+            dgvConstraints_D.Name = "dgvConstraints_D";
+            dgvConstraints_D.Size = new Size(430, 150);
+            dgvConstraints_D.TabIndex = 43;
+            // 
+            // dataGridViewTextBoxColumn2
+            // 
+            dataGridViewTextBoxColumn2.AutoSizeMode = DataGridViewAutoSizeColumnMode.Fill;
+            dataGridViewTextBoxColumn2.HeaderText = "";
+            dataGridViewTextBoxColumn2.Name = "dataGridViewTextBoxColumn2";
+            // 
+            // label16
+            // 
+            label16.AutoSize = true;
+            label16.Font = new Font("Segoe UI", 10F);
+            label16.Location = new Point(499, 267);
+            label16.Name = "label16";
+            label16.Size = new Size(31, 19);
+            label16.TabIndex = 42;
+            label16.Text = "Z =";
+            // 
+            // txtY_D
+            // 
+            txtY_D.Location = new Point(536, 267);
+            txtY_D.Name = "txtY_D";
+            txtY_D.Size = new Size(194, 23);
+            txtY_D.TabIndex = 41;
+            // 
+            // label17
+            // 
+            label17.AutoSize = true;
+            label17.Font = new Font("Segoe UI", 10F);
+            label17.Location = new Point(499, 238);
+            label17.Name = "label17";
+            label17.Size = new Size(31, 19);
+            label17.TabIndex = 40;
+            label17.Text = "X =";
+            // 
+            // txtX_D
+            // 
+            txtX_D.Location = new Point(536, 238);
+            txtX_D.Name = "txtX_D";
+            txtX_D.Size = new Size(194, 23);
+            txtX_D.TabIndex = 39;
+            // 
+            // label18
+            // 
+            label18.AutoSize = true;
+            label18.Font = new Font("Segoe UI", 10F);
+            label18.Location = new Point(499, 111);
+            label18.Name = "label18";
+            label18.Size = new Size(119, 19);
+            label18.TabIndex = 38;
+            label18.Text = "Кількість змінних:";
+            // 
+            // label19
+            // 
+            label19.AutoSize = true;
+            label19.Font = new Font("Segoe UI", 10F);
+            label19.Location = new Point(34, 87);
+            label19.Name = "label19";
+            label19.Size = new Size(88, 19);
+            label19.TabIndex = 37;
+            label19.Text = "Обмеження:";
+            // 
+            // label20
+            // 
+            label20.AutoSize = true;
+            label20.Font = new Font("Segoe UI", 10F);
+            label20.Location = new Point(34, 61);
+            label20.Name = "label20";
+            label20.Size = new Size(31, 19);
+            label20.TabIndex = 36;
+            label20.Text = "Z =";
+            // 
+            // nudVarCount_D
+            // 
+            nudVarCount_D.Location = new Point(624, 111);
+            nudVarCount_D.Name = "nudVarCount_D";
+            nudVarCount_D.Size = new Size(106, 23);
+            nudVarCount_D.TabIndex = 35;
+            // 
+            // btnExample_D
+            // 
+            btnExample_D.Location = new Point(620, 50);
+            btnExample_D.Name = "btnExample_D";
+            btnExample_D.Size = new Size(110, 41);
+            btnExample_D.TabIndex = 34;
+            btnExample_D.Text = "Приклад";
+            btnExample_D.UseVisualStyleBackColor = true;
+            btnExample_D.Click += btnExample_D_Click;
+            // 
+            // rbMax_D
+            // 
+            rbMax_D.AutoSize = true;
+            rbMax_D.Location = new Point(557, 61);
+            rbMax_D.Name = "rbMax_D";
+            rbMax_D.Size = new Size(47, 19);
+            rbMax_D.TabIndex = 33;
+            rbMax_D.TabStop = true;
+            rbMax_D.Text = "Max";
+            rbMax_D.UseVisualStyleBackColor = true;
+            // 
+            // rbMin_D
+            // 
+            rbMin_D.AutoSize = true;
+            rbMin_D.Location = new Point(499, 61);
+            rbMin_D.Name = "rbMin_D";
+            rbMin_D.Size = new Size(46, 19);
+            rbMin_D.TabIndex = 32;
+            rbMin_D.TabStop = true;
+            rbMin_D.Text = "Min";
+            rbMin_D.UseVisualStyleBackColor = true;
+            // 
+            // btnSolveLP_D
+            // 
+            btnSolveLP_D.Location = new Point(499, 152);
+            btnSolveLP_D.Name = "btnSolveLP_D";
+            btnSolveLP_D.Size = new Size(231, 57);
+            btnSolveLP_D.TabIndex = 31;
+            btnSolveLP_D.Text = "Знайти оптимальний розв'язок";
+            btnSolveLP_D.UseVisualStyleBackColor = true;
+            btnSolveLP_D.Click += btnSolveLP_D_Click;
+            // 
+            // txtZ_D
+            // 
+            txtZ_D.Location = new Point(64, 58);
+            txtZ_D.Name = "txtZ_D";
+            txtZ_D.Size = new Size(210, 23);
+            txtZ_D.TabIndex = 30;
+            // 
             // Form1
             // 
             AutoScaleDimensions = new SizeF(7F, 15F);
@@ -673,6 +852,10 @@ namespace ASSPR_1
             Part_C.PerformLayout();
             ((System.ComponentModel.ISupportInitialize)dgvConstraints_C).EndInit();
             ((System.ComponentModel.ISupportInitialize)nudVarCount_C).EndInit();
+            Part_D.ResumeLayout(false);
+            Part_D.PerformLayout();
+            ((System.ComponentModel.ISupportInitialize)dgvConstraints_D).EndInit();
+            ((System.ComponentModel.ISupportInitialize)nudVarCount_D).EndInit();
             ResumeLayout(false);
         }
 
@@ -734,5 +917,21 @@ namespace ASSPR_1
         private RadioButton rbMin_C;
         private Button btnSolveLP_C;
         private TextBox txtZ_C;
+        private TabPage Part_D;
+        private DataGridView dgvConstraints_D;
+        private DataGridViewTextBoxColumn dataGridViewTextBoxColumn2;
+        private Label label16;
+        private TextBox txtY_D;
+        private Label label17;
+        private TextBox txtX_D;
+        private Label label18;
+        private Label label19;
+        private Label label20;
+        private NumericUpDown nudVarCount_D;
+        private Button btnExample_D;
+        private RadioButton rbMax_D;
+        private RadioButton rbMin_D;
+        private Button btnSolveLP_D;
+        private TextBox txtZ_D;
     }
 }

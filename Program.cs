@@ -714,6 +714,8 @@ namespace ASSPR_1
             {
                 // Якщо індекс від 1 до varCount - це змінні x
                 if (index >= 1 && index <= varCount) return "x" + index;
+                // Змінні s (додаткові обмеження Гоморі), резервуємо індекси > 1000
+                if (index > 1000) return "s" + (index - 1000);
                 // Якщо індекс більший за varCount - це додаткові змінні y (slack variables)
                 if (index > varCount) return "y" + (index - varCount);
                 // На випадок, якщо ви використовуєте від'ємні індекси для y
@@ -908,6 +910,134 @@ namespace ASSPR_1
 
                 table = newTable;
                 colVars = newColVars;
+            }
+
+
+            //Part_D
+            /// <summary>
+            /// Алгоритм Гоморі для розв'язання задачі цілочислового програмування
+            /// </summary>
+            public static double[,] SolveIntegerGomory(double[,] initialTable, ref int[] rowVars, ref int[] colVars, int varCount, out string log)
+            {
+                StringBuilder sb = new StringBuilder();
+                double[,] table = initialTable;
+                int cutCount = 0;
+
+                table = FindFeasibleSolution(table, ref rowVars, ref colVars, varCount, out string feasLog);
+                sb.Append(feasLog);
+                if (table != null)
+                {
+                    sb.AppendLine("Знайдено опорний розв'язок:\n");
+                    sb.AppendLine(GetXVectorString(table, rowVars, colVars, varCount) + "\n");
+                }
+                table = FindOptimalSolution(table, ref rowVars, ref colVars, varCount, out string optLog);
+                sb.Append(optLog);
+                if (table != null)
+                {
+                    sb.AppendLine("Знайдено оптимальний розв'язок:\n");
+                    sb.AppendLine(GetXVectorString(table, rowVars, colVars, varCount) + "\n");
+                }
+
+                while (true)
+                {
+                    int rows = table.GetLength(0);
+                    int cols = table.GetLength(1);
+                    int rhsCol = cols - 1;
+
+                    double maxFrac = -1.0;
+                    int targetRow = -1;
+                    int targetVarIndex = -1;
+
+                    for (int i = 0; i < rows - 1; i++)
+                    {
+                        if (rowVars[i] >= 1 && rowVars[i] <= varCount)
+                        {
+                            double val = table[i, rhsCol];
+                            double frac = val - Math.Floor(val);
+
+                            if (frac > 1e-5 && frac < 1 - 1e-5)
+                            {
+                                if (frac > maxFrac)
+                                {
+                                    maxFrac = frac;
+                                    targetRow = i;
+                                    targetVarIndex = rowVars[i];
+                                }
+                            }
+                        }
+                    }
+
+                    if (targetRow == -1)
+                    {
+                        break;
+                    }
+
+                    cutCount++;
+                    sb.AppendLine($"Знайдено розв'язок, у якому змінні мають дробову частину, максимальна дробова частина у змінної: x{targetVarIndex} = {table[targetRow, rhsCol]:F2}\n");
+
+                    double[,] newTable = new double[rows + 1, cols];
+                    int[] newRowVars = new int[rows + 1];
+
+                    for (int i = 0; i < rows - 1; i++)
+                    {
+                        newRowVars[i] = rowVars[i];
+                        for (int j = 0; j < cols; j++)
+                            newTable[i, j] = table[i, j];
+                    }
+
+                    sb.Append($"Складено додаткове обмеження:\ns{cutCount} = ");
+                    bool isFirst = true;
+
+                    for (int j = 0; j < cols; j++)
+                    {
+                        double val = table[targetRow, j];
+                        double frac = val - Math.Floor(val);
+                        if (Math.Abs(frac) < 1e-5 || Math.Abs(frac - 1) < 1e-5) frac = 0;
+
+                        newTable[rows - 1, j] = -frac;
+
+                        if (j < cols - 1)
+                        {
+                            if (!isFirst) sb.Append(" + ");
+                            sb.AppendFormat("{0:F2} * {1}", frac, FormatVarName(colVars[j], varCount));
+                            isFirst = false;
+                        }
+                        else
+                        {
+                            sb.AppendFormat(" + ({0:F2}) >= 0\n\n", -frac);
+                        }
+                    }
+                    newRowVars[rows - 1] = 1000 + cutCount;
+
+                    newRowVars[rows] = rowVars[rows - 1];
+                    for (int j = 0; j < cols; j++)
+                        newTable[rows, j] = table[rows - 1, j];
+
+                    table = newTable;
+                    rowVars = newRowVars;
+
+                    sb.AppendLine("Симплекс-таблиця з новим обмеженням:");
+                    sb.Append(PrintTableToLog(table, rowVars, colVars, varCount));
+
+                    table = FindFeasibleSolution(table, ref rowVars, ref colVars, varCount, out string feasLog2);
+                    sb.Append(feasLog2);
+                    if (table != null)
+                    {
+                        sb.AppendLine("Знайдено опорний розв'язок:\n");
+                        sb.AppendLine(GetXVectorString(table, rowVars, colVars, varCount) + "\n");
+                    }
+
+                    table = FindOptimalSolution(table, ref rowVars, ref colVars, varCount, out string optLog2);
+                    sb.Append(optLog2);
+                    if (table != null)
+                    {
+                        sb.AppendLine("Знайдено оптимальний розв'язок:\n");
+                        sb.AppendLine(GetXVectorString(table, rowVars, colVars, varCount) + "\n");
+                    }
+                }
+
+                log = sb.ToString();
+                return table;
             }
         }
     }

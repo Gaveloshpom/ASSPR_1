@@ -494,5 +494,88 @@ namespace ASSPR_1
             //txtX_C.Text = "";
             //txtY_C.Text = "";
         }
+
+        //Part_D
+
+        private void btnExample_D_Click(object sender, EventArgs e)
+        {
+            //nudVarCount_D.Value = 3;
+            //txtZ_D.Text = "4x1+5x2+x3";
+            //rbMin_D.Checked = false;
+
+            //dgvConstraints_D.Rows.Clear();
+            //dgvConstraints_D.Rows.Add("3x1+2x2<=10");
+            //dgvConstraints_D.Rows.Add("x1+4x2<=11");
+            //dgvConstraints_D.Rows.Add("3x1+3x2+x3<=13");
+
+            //txtX_D.Text = "";
+            //txtY_D.Text = "";
+
+            //Варіант 15
+            nudVarCount_D.Value = 4;
+            txtZ_D.Text = "x1+x3+x6";
+            rbMin_D.Checked = false;
+
+            dgvConstraints_D.Rows.Clear();
+            dgvConstraints_D.Rows.Add("x1+x2+x3+x4+x5+3x6<=4");
+            dgvConstraints_D.Rows.Add("x1-4x2+x4+10x5-x6<=5");
+            dgvConstraints_D.Rows.Add("x1-3x2+7x3+x4+15x5-x6<=2");
+
+            txtX_D.Text = "";
+            txtY_D.Text = "";
+        }
+
+        private void btnSolveLP_D_Click(object sender, EventArgs e)
+        {
+            try
+            {
+                string zExpr = txtZ_D.Text;
+                int varCount = (int)nudVarCount_D.Value;
+                bool isMin = rbMin_D.Checked;
+
+                if (string.IsNullOrWhiteSpace(txtZ_D.Text)) throw new Exception("Введіть цільову функцію Z.");
+                if (dgvConstraints_D.Rows.Count == 0) throw new Exception("Введіть хоча б одне обмеження.");
+
+                List<string> constraintLines = new List<string>();
+                foreach (DataGridViewRow row in dgvConstraints_D.Rows)
+                {
+                    if (row.Cells[0].Value != null)
+                        constraintLines.Add(row.Cells[0].Value.ToString());
+                }
+
+                StringBuilder fullLog = new StringBuilder();
+                fullLog.AppendLine("Постановка задачі (Цілочислове програмування):");
+                fullLog.AppendLine($"Z = {zExpr} -> {(isMin ? "min" : "max")}");
+                fullLog.AppendLine("при обмеженнях:");
+                foreach (var c in constraintLines) fullLog.AppendLine(c);
+
+                int[] rowVars, colVars;
+                double[,] table = MathHelper.BuildInitialTable(zExpr, constraintLines, varCount, isMin, out rowVars, out colVars);
+
+                fullLog.AppendLine("\nВхідна симплекс-таблиця:");
+                fullLog.Append(MathHelper.PrintTableToLog(table, rowVars, colVars, varCount));
+
+                table = MathHelper.SolveIntegerGomory(table, ref rowVars, ref colVars, varCount, out string gomoryLog);
+                fullLog.Append(gomoryLog);
+
+                if (table != null)
+                {
+                    fullLog.AppendLine("Знайдено фінальний ЦІЛОЧИСЛОВИЙ оптимальний розв'язок:\n");
+                    fullLog.AppendLine(MathHelper.GetXVectorString(table, rowVars, colVars, varCount) + "\n");
+
+                    double zRaw = table[table.GetLength(0) - 1, table.GetLength(1) - 1];
+                    double zValue = isMin ? -zRaw : zRaw;
+                    fullLog.AppendLine($"{(isMin ? "Min" : "Max")} (Z) = {zValue:F2}");
+
+                    DisplayFinalResult(table, rowVars, colVars, varCount, isMin, txtX_D, txtY_D);
+                }
+
+                SaveLogToFile(fullLog.ToString());
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show("Помилка: " + ex.Message, "Помилка", MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
+        }
     }
 }
