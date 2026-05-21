@@ -712,6 +712,7 @@ namespace ASSPR_1
 
             public static string FormatVarName(int index, int varCount)
             {
+                if (index == 0) return "0";
                 // Якщо індекс від 1 до varCount - це змінні x
                 if (index >= 1 && index <= varCount) return "x" + index;
                 // Змінні s (додаткові обмеження Гоморі), резервуємо індекси > 1000
@@ -1035,6 +1036,169 @@ namespace ASSPR_1
                         sb.AppendLine(GetXVectorString(table, rowVars, colVars, varCount) + "\n");
                     }
                 }
+
+                log = sb.ToString();
+                return table;
+            }
+
+
+            //Part_2
+            public static string FormatDualLabel(int varIndex, bool isColumn)
+            {
+                if (varIndex > 0 && varIndex < 1000) // Змінні x_j (пряма) -> v_j (двоїста)
+                {
+                    if (isColumn) return $"v{varIndex}, -x{varIndex}";
+                    else return $"v{varIndex} x{varIndex}";
+                }
+                else if (varIndex < 0) // Додаткові змінні y_i (пряма) -> u_i (двоїста)
+                {
+                    int i = Math.Abs(varIndex);
+                    if (isColumn) return $"u{i}, -y{i}";
+                    else return $"u{i} y{i}";
+                }
+                return "?";
+            }
+
+            public static string PrintDualProblem(double[,] table, bool isMin, int varCount)
+            {
+                StringBuilder sb = new StringBuilder();
+                int m = table.GetLength(0) - 1;
+                int n = table.GetLength(1) - 1;
+
+                sb.AppendLine("Постановка двоїстої задачі:\n");
+                sb.Append("W = ");
+                bool first = true;
+                for (int i = 0; i < m; i++)
+                {
+                    double b_i = table[i, n];
+                    if (b_i == 0 && !first) continue;
+                    if (!first) sb.Append(" + ");
+
+                    if (b_i < 0) sb.Append($"({b_i:F2}) * u{i + 1}");
+                    else sb.Append($"{b_i:F2} * u{i + 1}");
+
+                    first = false;
+                }
+                // Пряма max -> Двоїста min, і навпаки
+                sb.AppendLine($" -> {(isMin ? "max" : "min")}\n");
+
+                sb.AppendLine("при обмеженнях:\n");
+                for (int j = 0; j < n; j++)
+                {
+                    sb.Append($"v{j + 1} = ");
+                    first = true;
+                    for (int i = 0; i < m; i++)
+                    {
+                        double a_ij = table[i, j];
+                        if (!first) sb.Append(" + ");
+
+                        if (a_ij < 0) sb.Append($"({a_ij:F2}) * u{i + 1}");
+                        else sb.Append($"{a_ij:F2} * u{i + 1}");
+
+                        first = false;
+                    }
+                    double c_j = table[m, j];
+                    if (c_j < 0) sb.AppendLine($" + ({c_j:F2}) >= 0");
+                    else sb.AppendLine($" + {c_j:F2} >= 0");
+                }
+                sb.AppendLine();
+                return sb.ToString();
+            }
+
+            public static string PrintDualTableToLog(double[,] table, int[] rowVars, int[] colVars)
+            {
+                StringBuilder sb = new StringBuilder();
+                int rows = table.GetLength(0);
+                int cols = table.GetLength(1);
+
+                // Шапка
+                sb.Append("          ");
+                for (int j = 0; j < cols - 1; j++)
+                {
+                    sb.Append($"{FormatDualLabel(colVars[j], true),10}");
+                }
+                sb.AppendLine($"{"W, 1",10}");
+                sb.AppendLine(new string('-', 10 + 10 * cols));
+
+                // Рядки
+                for (int i = 0; i < rows - 1; i++)
+                {
+                    string rowName = FormatDualLabel(rowVars[i], false);
+                    sb.Append($"{rowName,-8} =");
+                    for (int j = 0; j < cols; j++)
+                    {
+                        sb.Append($"{table[i, j],10:F2}");
+                    }
+                    sb.AppendLine();
+                }
+
+                // Z-рядок
+                sb.Append("1      Z =");
+                for (int j = 0; j < cols; j++)
+                {
+                    sb.Append($"{table[rows - 1, j],10:F2}");
+                }
+                sb.AppendLine();
+                sb.AppendLine();
+                return sb.ToString();
+            }
+
+            public static string GetUVectorString(double[,] table, int[] rowVars, int[] colVars, int constraintsCount)
+            {
+                int rows = table.GetLength(0);
+                int cols = table.GetLength(1);
+                int zRowIdx = rows - 1;
+                double[] uValues = new double[constraintsCount];
+
+                for (int i = 1; i <= constraintsCount; i++)
+                {
+                    int targetVar = -i;
+                    double val = 0;
+
+                    for (int j = 0; j < cols - 1; j++)
+                    {
+                        if (colVars[j] == targetVar || (i == 1 && colVars[j] == 0))
+                        {
+                            val = table[zRowIdx, j];
+                            break;
+                        }
+                    }
+                    uValues[i - 1] = val;
+                }
+
+                var formatted = uValues.Select(v => v.ToString("F2"));
+                return $"U = ({string.Join("; ", formatted)})";
+            }
+
+            /// <summary>
+            /// Оркестратор для пари двоїстих задач
+            /// </summary>
+            public static double[,] SolveDualPair(double[,] initialTable, ref int[] rowVars, ref int[] colVars, int varCount, bool isMin, out string log)
+            {
+                StringBuilder sb = new StringBuilder();
+                int m = initialTable.GetLength(0) - 1;
+
+                sb.AppendLine("Вхідна симплекс-таблиця для пари взаємно двоїстих задач:\n");
+                sb.Append(PrintDualTableToLog(initialTable, rowVars, colVars));
+                sb.Append(PrintDualProblem(initialTable, isMin, varCount));
+
+                double[,] table = initialTable;
+
+                table = FindFeasibleSolution(table, ref rowVars, ref colVars, varCount, out string feasLog);
+                sb.Append(feasLog);
+
+                if (table == null) throw new Exception("Система обмежень є суперечливою.");
+
+                sb.AppendLine("\nЗнайдено опорний розв'язок:\n");
+                sb.AppendLine("Розв'язки прямої задачі: " + GetXVectorString(table, rowVars, colVars, varCount));
+                sb.AppendLine("Розв'язки двоїстої задачі: " + GetUVectorString(table, rowVars, colVars, m) + "\n");
+
+                table = FindOptimalSolution(table, ref rowVars, ref colVars, varCount, out string optLog);
+                sb.Append(optLog);
+
+                sb.AppendLine("\nЗнайдено оптимальний розв'язок:\n");
+                sb.AppendLine("Розв'язки прямої задачі: " + GetXVectorString(table, rowVars, colVars, varCount));
+                sb.AppendLine("Розв'язки двоїстої задачі: " + GetUVectorString(table, rowVars, colVars, m) + "\n");
 
                 log = sb.ToString();
                 return table;
