@@ -55,7 +55,7 @@ namespace ASSPR_1
             tabControl1 = new TabControl();
             Part_A = new TabPage();
             Part_B = new TabPage();
-            dgvConstraints_2 = new DataGridView();
+            dgvConstraints_B = new DataGridView();
             Column = new DataGridViewTextBoxColumn();
             label10 = new Label();
             txtY = new TextBox();
@@ -102,6 +102,20 @@ namespace ASSPR_1
             rbMin_D = new RadioButton();
             btnSolveLP_D = new Button();
             txtZ_D = new TextBox();
+            Part_2 = new TabPage();
+            dgvConstraints_2 = new DataGridView();
+            dataGridViewTextBoxColumn3 = new DataGridViewTextBoxColumn();
+            label22 = new Label();
+            txtX_2 = new TextBox();
+            label23 = new Label();
+            label24 = new Label();
+            label25 = new Label();
+            nudVarCount_2 = new NumericUpDown();
+            btnExample_2 = new Button();
+            rbMax_2 = new RadioButton();
+            rbMin_2 = new RadioButton();
+            btnSolveLP_2 = new Button();
+            txtZ_2 = new TextBox();
             ((System.ComponentModel.ISupportInitialize)dgvMatrixA).BeginInit();
             ((System.ComponentModel.ISupportInitialize)dgvVectorB).BeginInit();
             ((System.ComponentModel.ISupportInitialize)dgvResult).BeginInit();
@@ -110,7 +124,7 @@ namespace ASSPR_1
             tabControl1.SuspendLayout();
             Part_A.SuspendLayout();
             Part_B.SuspendLayout();
-            ((System.ComponentModel.ISupportInitialize)dgvConstraints_2).BeginInit();
+            ((System.ComponentModel.ISupportInitialize)dgvConstraints_B).BeginInit();
             ((System.ComponentModel.ISupportInitialize)nudVarCount).BeginInit();
             Part_C.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)dgvConstraints_C).BeginInit();
@@ -118,6 +132,9 @@ namespace ASSPR_1
             Part_D.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)dgvConstraints_D).BeginInit();
             ((System.ComponentModel.ISupportInitialize)nudVarCount_D).BeginInit();
+            Part_2.SuspendLayout();
+            ((System.ComponentModel.ISupportInitialize)dgvConstraints_2).BeginInit();
+            ((System.ComponentModel.ISupportInitialize)nudVarCount_2).BeginInit();
             SuspendLayout();
             // 
             // dgvMatrixA
@@ -317,6 +334,7 @@ namespace ASSPR_1
             tabControl1.Controls.Add(Part_B);
             tabControl1.Controls.Add(Part_C);
             tabControl1.Controls.Add(Part_D);
+            tabControl1.Controls.Add(Part_2);
             tabControl1.Location = new Point(-3, 25);
             tabControl1.Name = "tabControl1";
             tabControl1.SelectedIndex = 0;
@@ -351,7 +369,7 @@ namespace ASSPR_1
             // 
             // Part_B
             // 
-            Part_B.Controls.Add(dgvConstraints_2);
+            Part_B.Controls.Add(dgvConstraints_B);
             Part_B.Controls.Add(label10);
             Part_B.Controls.Add(txtY);
             Part_B.Controls.Add(label9);
@@ -373,14 +391,14 @@ namespace ASSPR_1
             Part_B.Text = "Part_B";
             Part_B.UseVisualStyleBackColor = true;
             // 
-            // dgvConstraints_2
+            // dgvConstraints_B
             // 
-            dgvConstraints_2.ColumnHeadersHeightSizeMode = DataGridViewColumnHeadersHeightSizeMode.AutoSize;
-            dgvConstraints_2.Columns.AddRange(new DataGridViewColumn[] { Column });
-            dgvConstraints_2.Location = new Point(49, 119);
-            dgvConstraints_2.Name = "dgvConstraints_2";
-            dgvConstraints_2.Size = new Size(430, 150);
-            dgvConstraints_2.TabIndex = 15;
+            dgvConstraints_B.ColumnHeadersHeightSizeMode = DataGridViewColumnHeadersHeightSizeMode.AutoSize;
+            dgvConstraints_B.Columns.AddRange(new DataGridViewColumn[] { Column });
+            dgvConstraints_B.Location = new Point(49, 119);
+            dgvConstraints_B.Name = "dgvConstraints_B";
+            dgvConstraints_B.Size = new Size(430, 150);
+            dgvConstraints_B.TabIndex = 15;
             // 
             // Column
             // 
@@ -827,6 +845,146 @@ namespace ASSPR_1
             txtZ_D.Size = new Size(210, 23);
             txtZ_D.TabIndex = 30;
             // 
+            // Part_2
+            // 
+            Part_2.Controls.Add(dgvConstraints_2);
+            Part_2.Controls.Add(label22);
+            Part_2.Controls.Add(txtX_2);
+            Part_2.Controls.Add(label23);
+            Part_2.Controls.Add(label24);
+            Part_2.Controls.Add(label25);
+            Part_2.Controls.Add(nudVarCount_2);
+            Part_2.Controls.Add(btnExample_2);
+            Part_2.Controls.Add(rbMax_2);
+            Part_2.Controls.Add(rbMin_2);
+            Part_2.Controls.Add(btnSolveLP_2);
+            Part_2.Controls.Add(txtZ_2);
+            Part_2.Location = new Point(4, 24);
+            Part_2.Name = "Part_2";
+            Part_2.Size = new Size(819, 451);
+            Part_2.TabIndex = 4;
+            Part_2.Text = "Part_2";
+            Part_2.UseVisualStyleBackColor = true;
+            // 
+            // dgvConstraints_2
+            // 
+            dgvConstraints_2.ColumnHeadersHeightSizeMode = DataGridViewColumnHeadersHeightSizeMode.AutoSize;
+            dgvConstraints_2.Columns.AddRange(new DataGridViewColumn[] { dataGridViewTextBoxColumn3 });
+            dgvConstraints_2.Location = new Point(61, 76);
+            dgvConstraints_2.Name = "dgvConstraints_2";
+            dgvConstraints_2.Size = new Size(430, 150);
+            dgvConstraints_2.TabIndex = 57;
+            // 
+            // dataGridViewTextBoxColumn3
+            // 
+            dataGridViewTextBoxColumn3.AutoSizeMode = DataGridViewAutoSizeColumnMode.Fill;
+            dataGridViewTextBoxColumn3.HeaderText = "";
+            dataGridViewTextBoxColumn3.Name = "dataGridViewTextBoxColumn3";
+            // 
+            // label22
+            // 
+            label22.AutoSize = true;
+            label22.Font = new Font("Segoe UI", 10F);
+            label22.Location = new Point(526, 177);
+            label22.Name = "label22";
+            label22.Size = new Size(72, 19);
+            label22.TabIndex = 54;
+            label22.Text = "Розв'язки:";
+            // 
+            // txtX_2
+            // 
+            txtX_2.Location = new Point(526, 203);
+            txtX_2.Multiline = true;
+            txtX_2.Name = "txtX_2";
+            txtX_2.Size = new Size(268, 208);
+            txtX_2.TabIndex = 53;
+            // 
+            // label23
+            // 
+            label23.AutoSize = true;
+            label23.Font = new Font("Segoe UI", 10F);
+            label23.Location = new Point(526, 76);
+            label23.Name = "label23";
+            label23.Size = new Size(119, 19);
+            label23.TabIndex = 52;
+            label23.Text = "Кількість змінних:";
+            // 
+            // label24
+            // 
+            label24.AutoSize = true;
+            label24.Font = new Font("Segoe UI", 10F);
+            label24.Location = new Point(61, 52);
+            label24.Name = "label24";
+            label24.Size = new Size(88, 19);
+            label24.TabIndex = 51;
+            label24.Text = "Обмеження:";
+            // 
+            // label25
+            // 
+            label25.AutoSize = true;
+            label25.Font = new Font("Segoe UI", 10F);
+            label25.Location = new Point(61, 26);
+            label25.Name = "label25";
+            label25.Size = new Size(31, 19);
+            label25.TabIndex = 50;
+            label25.Text = "Z =";
+            // 
+            // nudVarCount_2
+            // 
+            nudVarCount_2.Location = new Point(651, 76);
+            nudVarCount_2.Name = "nudVarCount_2";
+            nudVarCount_2.Size = new Size(106, 23);
+            nudVarCount_2.TabIndex = 49;
+            // 
+            // btnExample_2
+            // 
+            btnExample_2.Location = new Point(647, 15);
+            btnExample_2.Name = "btnExample_2";
+            btnExample_2.Size = new Size(110, 41);
+            btnExample_2.TabIndex = 48;
+            btnExample_2.Text = "Приклад";
+            btnExample_2.UseVisualStyleBackColor = true;
+            btnExample_2.Click += btnExample_2_Click;
+            // 
+            // rbMax_2
+            // 
+            rbMax_2.AutoSize = true;
+            rbMax_2.Location = new Point(584, 26);
+            rbMax_2.Name = "rbMax_2";
+            rbMax_2.Size = new Size(47, 19);
+            rbMax_2.TabIndex = 47;
+            rbMax_2.TabStop = true;
+            rbMax_2.Text = "Max";
+            rbMax_2.UseVisualStyleBackColor = true;
+            // 
+            // rbMin_2
+            // 
+            rbMin_2.AutoSize = true;
+            rbMin_2.Location = new Point(526, 26);
+            rbMin_2.Name = "rbMin_2";
+            rbMin_2.Size = new Size(46, 19);
+            rbMin_2.TabIndex = 46;
+            rbMin_2.TabStop = true;
+            rbMin_2.Text = "Min";
+            rbMin_2.UseVisualStyleBackColor = true;
+            // 
+            // btnSolveLP_2
+            // 
+            btnSolveLP_2.Location = new Point(526, 117);
+            btnSolveLP_2.Name = "btnSolveLP_2";
+            btnSolveLP_2.Size = new Size(231, 57);
+            btnSolveLP_2.TabIndex = 45;
+            btnSolveLP_2.Text = "Знайти оптимальний розв'язок";
+            btnSolveLP_2.UseVisualStyleBackColor = true;
+            btnSolveLP_2.Click += btnSolveLP_2_Click;
+            // 
+            // txtZ_2
+            // 
+            txtZ_2.Location = new Point(91, 23);
+            txtZ_2.Name = "txtZ_2";
+            txtZ_2.Size = new Size(210, 23);
+            txtZ_2.TabIndex = 44;
+            // 
             // Form1
             // 
             AutoScaleDimensions = new SizeF(7F, 15F);
@@ -846,7 +1004,7 @@ namespace ASSPR_1
             Part_A.PerformLayout();
             Part_B.ResumeLayout(false);
             Part_B.PerformLayout();
-            ((System.ComponentModel.ISupportInitialize)dgvConstraints_2).EndInit();
+            ((System.ComponentModel.ISupportInitialize)dgvConstraints_B).EndInit();
             ((System.ComponentModel.ISupportInitialize)nudVarCount).EndInit();
             Part_C.ResumeLayout(false);
             Part_C.PerformLayout();
@@ -856,6 +1014,10 @@ namespace ASSPR_1
             Part_D.PerformLayout();
             ((System.ComponentModel.ISupportInitialize)dgvConstraints_D).EndInit();
             ((System.ComponentModel.ISupportInitialize)nudVarCount_D).EndInit();
+            Part_2.ResumeLayout(false);
+            Part_2.PerformLayout();
+            ((System.ComponentModel.ISupportInitialize)dgvConstraints_2).EndInit();
+            ((System.ComponentModel.ISupportInitialize)nudVarCount_2).EndInit();
             ResumeLayout(false);
         }
 
@@ -899,7 +1061,7 @@ namespace ASSPR_1
         private Label label9;
         private TextBox txtX;
         private Label label8;
-        private DataGridView dgvConstraints_2;
+        private DataGridView dgvConstraints_B;
         private DataGridViewTextBoxColumn Column;
         private TabPage Part_C;
         private DataGridView dgvConstraints_C;
@@ -933,5 +1095,19 @@ namespace ASSPR_1
         private RadioButton rbMin_D;
         private Button btnSolveLP_D;
         private TextBox txtZ_D;
+        private TabPage Part_2;
+        private DataGridView dgvConstraints_2;
+        private DataGridViewTextBoxColumn dataGridViewTextBoxColumn3;
+        private Label label22;
+        private TextBox txtX_2;
+        private Label label23;
+        private Label label24;
+        private Label label25;
+        private NumericUpDown nudVarCount_2;
+        private Button btnExample_2;
+        private RadioButton rbMax_2;
+        private RadioButton rbMin_2;
+        private Button btnSolveLP_2;
+        private TextBox txtZ_2;
     }
 }

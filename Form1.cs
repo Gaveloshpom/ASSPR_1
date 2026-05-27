@@ -210,10 +210,10 @@ namespace ASSPR_1
             //txtZ.Text = "x1+2x2-x3-x4";
             //rbMin.Checked = false;
 
-            //dgvConstraints_2.Rows.Clear();
-            //dgvConstraints_2.Rows.Add("x1+x2-x3-2x4<=6");
-            //dgvConstraints_2.Rows.Add("x1+x2+x3-x4>=5");
-            //dgvConstraints_2.Rows.Add("2x1-x2+3x3+4x4<=10");
+            //dgvConstraints_B.Rows.Clear();
+            //dgvConstraints_B.Rows.Add("x1+x2-x3-2x4<=6");
+            //dgvConstraints_B.Rows.Add("x1+x2+x3-x4>=5");
+            //dgvConstraints_B.Rows.Add("2x1-x2+3x3+4x4<=10");
 
             //txtX.Text = "";
             //txtY.Text = "";
@@ -222,22 +222,34 @@ namespace ASSPR_1
             //txtZ.Text = "-2x1+3x2-3x4";
             //rbMin.Checked = true;
 
-            //dgvConstraints_2.Rows.Clear();
-            //dgvConstraints_2.Rows.Add("x1+x2-x3-2x4<=6");
-            //dgvConstraints_2.Rows.Add("x1+x2+x3-x4>=5");
-            //dgvConstraints_2.Rows.Add("2x1-x2+3x3+4x4<=10");
+            //dgvConstraints_B.Rows.Clear();
+            //dgvConstraints_B.Rows.Add("x1+x2-x3-2x4<=6");
+            //dgvConstraints_B.Rows.Add("x1+x2+x3-x4>=5");
+            //dgvConstraints_B.Rows.Add("2x1-x2+3x3+4x4<=10");
 
             //txtX.Text = "";
             //txtY.Text = "";
 
-            nudVarCount.Value = 4;
-            txtZ.Text = "x1+x3+x6";
-            rbMin.Checked = false;
+            //nudVarCount.Value = 4;
+            //txtZ.Text = "x1+x3+x6";
+            //rbMin.Checked = false;
 
-            dgvConstraints_2.Rows.Clear();
-            dgvConstraints_2.Rows.Add("x1+x2+x3+x4+x5+3x6<=4");
-            dgvConstraints_2.Rows.Add("x1-4x2+x4+10x5-x6<=5");
-            dgvConstraints_2.Rows.Add("x1-3x2+7x3+x4+15x5-x6<=2");
+            //dgvConstraints_B.Rows.Clear();
+            //dgvConstraints_B.Rows.Add("x1+x2+x3+x4+x5+3x6<=4");
+            //dgvConstraints_B.Rows.Add("x1-4x2+x4+10x5-x6<=5");
+            //dgvConstraints_B.Rows.Add("x1-3x2+7x3+x4+15x5-x6<=2");
+
+            //txtX.Text = "";
+            //txtY.Text = "";
+
+            //Part_2
+            nudVarCount.Value = 2;
+            txtZ.Text = "-1x1+5x2";
+            rbMin.Checked = true;
+
+            dgvConstraints_B.Rows.Clear();
+            dgvConstraints_B.Rows.Add("x1+x2-x3-3>=0");
+            dgvConstraints_B.Rows.Add("-1x1+2x2-1x4-1>=0");
 
             txtX.Text = "";
             txtY.Text = "";
@@ -255,11 +267,11 @@ namespace ASSPR_1
 
                 if (string.IsNullOrWhiteSpace(txtZ.Text))
                     throw new Exception("Введіть цільову функцію Z.");
-                if (dgvConstraints_2.Rows.Count == 0)
+                if (dgvConstraints_B.Rows.Count == 0)
                     throw new Exception("Введіть хоча б одне обмеження.");
 
                 List<string> constraintLines = new List<string>();
-                foreach (DataGridViewRow row in dgvConstraints_2.Rows)
+                foreach (DataGridViewRow row in dgvConstraints_B.Rows)
                 {
                     if (row.Cells[0].Value != null)
                         constraintLines.Add(row.Cells[0].Value.ToString());
@@ -576,6 +588,103 @@ namespace ASSPR_1
             {
                 MessageBox.Show("Помилка: " + ex.Message, "Помилка", MessageBoxButtons.OK, MessageBoxIcon.Error);
             }
+        }
+
+        //Part_2
+        private void btnSolveLP_2_Click(object sender, EventArgs e)
+        {
+            try
+            {
+                string zExpr = txtZ_2.Text; // Змініть на свій TextBox
+                int varCount = (int)nudVarCount_2.Value;
+                bool isMin = rbMin_2.Checked;
+
+                if (string.IsNullOrWhiteSpace(zExpr)) throw new Exception("Введіть цільову функцію Z.");
+                if (dgvConstraints_2.Rows.Count == 0) throw new Exception("Введіть хоча б одне обмеження.");
+
+                List<string> constraintLines = new List<string>();
+                foreach (DataGridViewRow row in dgvConstraints_2.Rows)
+                {
+                    if (row.Cells[0].Value != null)
+                        constraintLines.Add(row.Cells[0].Value.ToString());
+                }
+
+                StringBuilder fullLog = new StringBuilder();
+                fullLog.AppendLine("Згенерований протокол обчислення:\n");
+                fullLog.AppendLine("Постановка прямої задачі:\n");
+                fullLog.AppendLine($"Z = {zExpr} -> {(isMin ? "min" : "max")}\n");
+                fullLog.AppendLine("при обмеженнях:\n");
+                foreach (var c in constraintLines) fullLog.AppendLine(c);
+                fullLog.AppendLine($"\nx[j]>=0, j=1,{varCount}\n");
+
+                int[] rowVars, colVars;
+                double[,] table = MathHelper.BuildInitialTable(zExpr, constraintLines, varCount, isMin, out rowVars, out colVars);
+
+                fullLog.AppendLine("Перепишемо систему обмежень прямої задачі:\n");
+
+                int m = table.GetLength(0) - 1;
+                int n = table.GetLength(1) - 1;
+                for (int i = 0; i < m; i++)
+                {
+                    for (int j = 0; j < n; j++)
+                    {
+                        fullLog.Append($"({table[i, j]:F2}) * X[{j + 1}]" + (j < n - 1 ? " + " : ""));
+                    }
+                    fullLog.AppendLine($" + ({table[i, n]:F2}) >= 0"); 
+                }
+                fullLog.AppendLine();
+
+                table = MathHelper.SolveDualPair(table, ref rowVars, ref colVars, varCount, isMin, out string dualLog);
+                fullLog.Append(dualLog);
+
+                if (table != null)
+                {
+                    double zRaw = table[table.GetLength(0) - 1, table.GetLength(1) - 1];
+                    double zValue = isMin ? -zRaw : zRaw;
+
+                    fullLog.AppendLine($"Max (Z) = {zValue:F2}");
+                    fullLog.AppendLine($"Min (W) = {zValue:F2}");
+                    
+                    txtX_2.Text = $"Розв'язки прямої задачі:";
+                    txtX_2.Text += Environment.NewLine + MathHelper.GetXVectorString(table, rowVars, colVars, varCount);
+                    txtX_2.Text += Environment.NewLine + $"Розв'язки двоїстої задачі:";
+                    txtX_2.Text += Environment.NewLine + MathHelper.GetUVectorString(table, rowVars, colVars, m);
+                    txtX_2.Text += Environment.NewLine + $"Max (Z) = {zValue:F2}";
+                    txtX_2.Text += Environment.NewLine + $"Min (W) = {zValue:F2}";
+                }
+
+                SaveLogToFile(fullLog.ToString());
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show("Помилка: " + ex.Message, "Помилка", MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
+        }
+
+        private void btnExample_2_Click(object sender, EventArgs e)
+        {
+            //nudVarCount_2.Value = 4;
+            //txtZ_2.Text = "x1+2x2-x3-x4";
+            //rbMin_2.Checked = false;
+
+            //dgvConstraints_2.Rows.Clear();
+            //dgvConstraints_2.Rows.Add("x1+x2-x3-2x4<=6");
+            //dgvConstraints_2.Rows.Add("x1+x2+x3-x4>=5");
+            //dgvConstraints_2.Rows.Add("2x1-x2+3x3+4x4<=10");
+
+            //txtX_2.Text = "";
+
+            nudVarCount_2.Value = 2;
+            txtZ_2.Text = "3x1+x2";
+            rbMin_2.Checked = false;
+
+            dgvConstraints_2.Rows.Clear();
+            dgvConstraints_2.Rows.Add("x1-x2=-1");
+            dgvConstraints_2.Rows.Add("x1+2x2<=5");
+            dgvConstraints_2.Rows.Add("x1>=0");
+            dgvConstraints_2.Rows.Add("x2>=0");
+
+            txtX_2.Text = "";
         }
     }
 }
