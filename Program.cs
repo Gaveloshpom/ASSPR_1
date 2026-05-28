@@ -1387,6 +1387,190 @@ namespace ASSPR_1
                 }
                 return dt;
             }
+
+
+            //Part_4
+            /// <summary>
+            /// Розв'язання гри з природою за всіма критеріями
+            /// </summary>
+            public static void SolveGameAgainstNature(
+                double[,] matrix, double alpha, double[] probabilities,
+                out string log,
+                out string resWald, out string resOpt, out string resHurwicz,
+                out string resSavage, out string resLaplace, out string resBayes,
+                out string bestOverall)
+            {
+                StringBuilder sb = new StringBuilder();
+                int m = matrix.GetLength(0);
+                int n = matrix.GetLength(1);
+                List<string> totalOptimals = new List<string>();
+
+                sb.AppendLine("Згенерований протокол обчислення:\n");
+                sb.AppendLine("Матриця корисності результатів U:\n");
+                for (int i = 0; i < m; i++)
+                {
+                    for (int j = 0; j < n; j++) sb.Append($"{matrix[i, j],4} ");
+                    sb.AppendLine();
+                }
+                sb.AppendLine();
+
+                // 1. Критерій Вальда
+                sb.AppendLine("Критерій Вальда:\n");
+                double[] waldVals = new double[m];
+                for (int i = 0; i < m; i++)
+                {
+                    double min = matrix[i, 0];
+                    for (int j = 1; j < n; j++) if (matrix[i, j] < min) min = matrix[i, j];
+                    waldVals[i] = min;
+                    sb.AppendLine($"min в рядку {i + 1}: {min}");
+                }
+                double waldMax = waldVals.Max();
+                var optWaldList = Enumerable.Range(0, m).Where(i => Math.Abs(waldVals[i] - waldMax) < 1e-9).Select(i => $"A{i + 1}").ToList();
+                totalOptimals.AddRange(optWaldList);
+                resWald = string.Join(" або ", optWaldList);
+                sb.AppendLine($"\nМаксимальний елемент: {waldMax}");
+                sb.AppendLine($"Оптимальні стратегії: {resWald}\n");
+
+                // 2. Критерій максимаксу
+                sb.AppendLine("Критерій максимаксу:\n");
+                double[] optVals = new double[m];
+                for (int i = 0; i < m; i++)
+                {
+                    double max = matrix[i, 0];
+                    for (int j = 1; j < n; j++) if (matrix[i, j] > max) max = matrix[i, j];
+                    optVals[i] = max;
+                    sb.AppendLine($"max в рядку {i + 1}: {max}");
+                }
+                double optMax = optVals.Max();
+                var optMaxList = Enumerable.Range(0, m).Where(i => Math.Abs(optVals[i] - optMax) < 1e-9).Select(i => $"A{i + 1}").ToList();
+                totalOptimals.AddRange(optMaxList);
+                resOpt = string.Join(" або ", optMaxList);
+                sb.AppendLine($"\nМаксимальний елемент: {optMax}");
+                sb.AppendLine($"Оптимальні стратегії: {resOpt}\n");
+
+                // 3. Критерій Гурвіца
+                sb.AppendLine("Критерій Гурвіца:\n");
+                sb.AppendLine($"Коефіцієнт y = {alpha}\n");
+                for (int i = 0; i < m; i++) sb.AppendLine($"min в рядку {i + 1}: {waldVals[i]}");
+                sb.AppendLine();
+                for (int i = 0; i < m; i++) sb.AppendLine($"max в рядку {i + 1}: {optVals[i]}");
+                sb.AppendLine();
+
+                double[] hurwiczVals = new double[m];
+                for (int i = 0; i < m; i++)
+                {
+                    hurwiczVals[i] = alpha * waldVals[i] + (1 - alpha) * optVals[i];
+                    sb.AppendLine($"s{i + 1} = {alpha} * {waldVals[i]} + {(1 - alpha)} * {optVals[i]} = {hurwiczVals[i]}");
+                }
+                double hurwiczMax = hurwiczVals.Max();
+                var optHurwiczList = Enumerable.Range(0, m).Where(i => Math.Abs(hurwiczVals[i] - hurwiczMax) < 1e-9).Select(i => $"A{i + 1}").ToList();
+                totalOptimals.AddRange(optHurwiczList);
+                resHurwicz = string.Join(" або ", optHurwiczList);
+                sb.AppendLine($"\nМаксимальний елемент: {hurwiczMax}");
+                sb.AppendLine($"Оптимальні стратегії: {resHurwicz}\n");
+
+                // 4. Критерій Севіджа
+                sb.AppendLine("Критерій Севіджа:\n");
+                sb.AppendLine("Матриця ризиків:\n");
+                double[] colMaxs = new double[n];
+                for (int j = 0; j < n; j++)
+                {
+                    double max = matrix[0, j];
+                    for (int i = 1; i < m; i++) if (matrix[i, j] > max) max = matrix[i, j];
+                    colMaxs[j] = max;
+                }
+                double[,] riskMatrix = new double[m, n];
+                for (int i = 0; i < m; i++)
+                {
+                    sb.Append("  ");
+                    for (int j = 0; j < n; j++)
+                    {
+                        riskMatrix[i, j] = colMaxs[j] - matrix[i, j];
+                        sb.Append($"{riskMatrix[i, j],2} ");
+                    }
+                    sb.AppendLine();
+                }
+                sb.AppendLine();
+                double[] savageMaxRisk = new double[m];
+                for (int i = 0; i < m; i++)
+                {
+                    double maxRisk = riskMatrix[i, 0];
+                    for (int j = 1; j < n; j++) if (riskMatrix[i, j] > maxRisk) maxRisk = riskMatrix[i, j];
+                    savageMaxRisk[i] = maxRisk;
+                    sb.AppendLine($"max в рядку {i + 1}: {maxRisk}");
+                }
+                double savageMin = savageMaxRisk.Min();
+                var optSavageList = Enumerable.Range(0, m).Where(i => Math.Abs(savageMaxRisk[i] - savageMin) < 1e-9).Select(i => $"A{i + 1}").ToList();
+                totalOptimals.AddRange(optSavageList);
+                resSavage = string.Join(" або ", optSavageList);
+                sb.AppendLine($"\nМінімальний елемент: {savageMin}");
+                sb.AppendLine($"Оптимальні стратегії: {resSavage}\n");
+
+                // 5. Критерій Байєса
+                resBayes = "-";
+                if (probabilities != null && probabilities.Length == n)
+                {
+                    sb.AppendLine("Критерій Байєса:\n");
+                    sb.Append("Ймовірності застосування природою своїх стратегій: ");
+                    for (int j = 0; j < n; j++) sb.Append($"p{j + 1} = {probabilities[j]}; ");
+                    sb.AppendLine("\n");
+
+                    double[] bayesVals = new double[m];
+                    for (int i = 0; i < m; i++)
+                    {
+                        double sum = 0;
+                        sb.Append($"s{i + 1} = ");
+                        for (int j = 0; j < n; j++)
+                        {
+                            sum += matrix[i, j] * probabilities[j];
+                            sb.Append($"{matrix[i, j]} * {probabilities[j]}");
+                            if (j < n - 1) sb.Append(" + ");
+                        }
+                        bayesVals[i] = sum;
+                        sb.AppendLine($" = {sum}");
+                    }
+                    double bayesMax = bayesVals.Max();
+                    var optBayesList = Enumerable.Range(0, m).Where(i => Math.Abs(bayesVals[i] - bayesMax) < 1e-9).Select(i => $"A{i + 1}").ToList();
+                    totalOptimals.AddRange(optBayesList);
+                    resBayes = string.Join(" або ", optBayesList);
+                    sb.AppendLine($"\nМаксимальний елемент: {bayesMax}");
+                    sb.AppendLine($"Оптимальні стратегії: {resBayes}\n");
+                }
+
+                // 6. Критерій Лапласа
+                sb.AppendLine("Критерій Лапласа:\n");
+                double[] laplaceVals = new double[m];
+                double probL = 1.0 / n;
+                for (int i = 0; i < m; i++)
+                {
+                    double sum = 0;
+                    sb.Append($"s{i + 1} = ");
+                    for (int j = 0; j < n; j++)
+                    {
+                        sum += matrix[i, j] * probL;
+                        sb.Append($"{matrix[i, j]} * {probL}");
+                        if (j < n - 1) sb.Append(" + ");
+                    }
+                    laplaceVals[i] = sum;
+                    sb.AppendLine($" = {sum}");
+                }
+                double laplaceMax = laplaceVals.Max();
+                var optLaplaceList = Enumerable.Range(0, m).Where(i => Math.Abs(laplaceVals[i] - laplaceMax) < 1e-9).Select(i => $"A{i + 1}").ToList();
+                totalOptimals.AddRange(optLaplaceList);
+                resLaplace = string.Join(" або ", optLaplaceList);
+                sb.AppendLine($"\nМаксимальний елемент: {laplaceMax}");
+                sb.AppendLine($"Оптимальні стратегії: {resLaplace}\n");
+
+                // Частотний аналіз оптимальних стратегій
+                var grouped = totalOptimals.GroupBy(x => x).OrderByDescending(g => g.Count());
+                int maxCount = grouped.First().Count();
+                var modes = grouped.Where(g => g.Count() == maxCount).Select(g => g.Key).ToList();
+                bestOverall = string.Join(" або ", modes);
+
+                sb.AppendLine($"Найчастіше були оптимальними стратегії: {bestOverall}");
+
+                log = sb.ToString();
+            }
         }
     }
 }
