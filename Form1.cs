@@ -686,7 +686,6 @@ namespace ASSPR_1
         {
             try
             {
-                // Зчитування матриці гри з dgvMatrixGame
                 globalMatrix = GetMatrixFromGrid(dgvMatrixGame);
 
                 StringBuilder log = new StringBuilder();
@@ -696,7 +695,6 @@ namespace ASSPR_1
 
                 double v;
 
-                // 1. Шукаємо сідлову точку
                 if (MathHelper.FindSaddlePoint(globalMatrix, out v, out globalP, out globalQ, out string saddleLog))
                 {
                     log.Append(saddleLog);
@@ -704,12 +702,10 @@ namespace ASSPR_1
                 else
                 {
                     log.Append(saddleLog);
-                    // 2. Якщо сідлової точки немає, розв'язуємо через ЛП
                     MathHelper.SolveMatrixGameLP(globalMatrix, out v, out globalP, out globalQ, out string lpLog);
                     log.Append(lpLog);
                 }
 
-                // Виведення результатів на форму
                 txtP.Text = string.Join("; ", globalP.Select(x => x.ToString("F2")));
                 txtQ.Text = string.Join("; ", globalQ.Select(x => x.ToString("F2")));
                 txtV.Text = v.ToString("F2");
@@ -729,20 +725,16 @@ namespace ASSPR_1
                 if (globalP == null || globalQ == null)
                     throw new Exception("Спочатку знайдіть розв'язок гри!");
 
-                int iterations = (int)nudIterations.Value; // Зчитати кількість партій (напр. 50)
+                int iterations = (int)nudIterations.Value; 
 
-                // Моделюємо гру
                 System.Data.DataTable simTable = MathHelper.SimulateGame(globalMatrix, globalP, globalQ, iterations);
 
-                // Виводимо в таблицю
                 dgvSimulation.DataSource = simTable;
 
                 dgvSimulation.AutoSizeColumnsMode = DataGridViewAutoSizeColumnsMode.Fill;
 
-                // 2. Дозволяємо системі автоматично підлаштувати висоту рядків під контент
                 dgvSimulation.AutoSizeRowsMode = DataGridViewAutoSizeRowsMode.AllCells;
 
-                // 3. Робимо шрифти трохи більшими та вирівнюємо текст по центру для гарного вигляду
                 dgvSimulation.DefaultCellStyle.Alignment = DataGridViewContentAlignment.MiddleCenter;
                 dgvSimulation.ColumnHeadersDefaultCellStyle.Alignment = DataGridViewContentAlignment.MiddleCenter;
 
@@ -756,6 +748,7 @@ namespace ASSPR_1
 
         private void btnExamplePart3_Click(object sender, EventArgs e)
         {
+            dgvNatureGame.Rows.Clear();
             //dgvMatrixGame.ColumnCount = 3;
 
             //dgvMatrixGame.Rows.Add(5, 2, 7);
@@ -793,6 +786,82 @@ namespace ASSPR_1
 
             dgvMatrixGame.Rows.Add(8, 12, 6, 10);
             dgvMatrixGame.Rows.Add(14, 7, 12, 4);
+        }
+
+        //Part_4
+        private void btnSolveNatureGame_Click(object sender, EventArgs e)
+        {
+            try
+            {
+                double[,] matrix = GetMatrixFromGrid(dgvNatureGame);
+
+                double alpha = 0.5; 
+                if (!string.IsNullOrWhiteSpace(txtAlpha.Text))
+                {
+                    alpha = Convert.ToDouble(txtAlpha.Text.Replace(".", ","));
+                    if (alpha < 0 || alpha > 1) throw new Exception("Коефіцієнт альфа має бути в межах від 0 до 1.");
+                }
+
+                double[] probabilities = null;
+                if (!string.IsNullOrWhiteSpace(txtProbabilities.Text))
+                {
+                    string[] parts = txtProbabilities.Text.Split(new[] { ';', ',', ' ' }, StringSplitOptions.RemoveEmptyEntries);
+                    probabilities = new double[parts.Length];
+                    for (int i = 0; i < parts.Length; i++)
+                    {
+                        probabilities[i] = Convert.ToDouble(parts[i].Replace(".", ","));
+                    }
+                }
+
+                MathHelper.SolveGameAgainstNature(
+                    matrix, alpha, probabilities,
+                    out string log,
+                    out string resWald, out string resOpt, out string resHurwicz,
+                    out string resSavage, out string resLaplace, out string resBayes,
+                    out string bestOverall);
+
+                txtWald.Text = resWald;
+                txtOpt.Text = resOpt;
+                txtHurwicz.Text = resHurwicz;
+                txtSavage.Text = resSavage;
+                txtLaplace.Text = resLaplace;
+                txtBayes.Text = resBayes;
+                txtBestOverall.Text = bestOverall;
+
+                SaveLogToFile(log);
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show("Помилка: " + ex.Message, "Помилка", MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
+        }
+
+        private void btnPart_4_Click(object sender, EventArgs e)
+        {
+            dgvNatureGame.Rows.Clear();
+            //dgvNatureGame.ColumnCount = 4;
+
+            //dgvNatureGame.Rows.Add(-1, 1, 1, 4);
+            //dgvNatureGame.Rows.Add(-1, -2, 2, 3);
+            //dgvNatureGame.Rows.Add(3, -1, 3, 2);
+            //txtProbabilities.Text = "0.2 0.4 0.1 0.3";
+            //txtAlpha.Text = "0.3";
+
+            //dgvNatureGame.ColumnCount = 4;
+
+            //dgvNatureGame.Rows.Add(2, -1, 3, 4);
+            //dgvNatureGame.Rows.Add(-1, 2, 3, 7);
+            //dgvNatureGame.Rows.Add(5, 4, 6, 2);
+            //txtProbabilities.Text = "0.4 0.1 0.2 0.3";
+            //txtAlpha.Text = "0.4";
+
+            dgvNatureGame.ColumnCount = 4;
+
+            dgvNatureGame.Rows.Add(4, -2, -3, 1);
+            dgvNatureGame.Rows.Add(-1, 1, -2, 2);
+            dgvNatureGame.Rows.Add(-1, -1, -4, 6);
+            txtProbabilities.Text = "0.2 0.3 0.3 0.2";
+            txtAlpha.Text = "0.3";
         }
     }
 }
