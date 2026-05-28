@@ -1203,6 +1203,190 @@ namespace ASSPR_1
                 log = sb.ToString();
                 return table;
             }
+
+
+            //Part_3
+            /// <summary>
+            /// Пошук сідлової точки (чистих стратегій)
+            /// </summary>
+            public static bool FindSaddlePoint(double[,] matrix, out double v, out double[] p, out double[] q, out string log)
+            {
+                StringBuilder sb = new StringBuilder();
+                int m = matrix.GetLength(0);
+                int n = matrix.GetLength(1);
+
+                double[] rowMins = new double[m];
+                double[] colMaxs = new double[n];
+
+                // Пошук мінімумів по рядках
+                for (int i = 0; i < m; i++)
+                {
+                    double min = matrix[i, 0];
+                    for (int j = 1; j < n; j++) if (matrix[i, j] < min) min = matrix[i, j];
+                    rowMins[i] = min;
+                }
+
+                // Пошук максимумів по стовпцях
+                for (int j = 0; j < n; j++)
+                {
+                    double max = matrix[0, j];
+                    for (int i = 1; i < m; i++) if (matrix[i, j] > max) max = matrix[i, j];
+                    colMaxs[j] = max;
+                }
+
+                double lowerValue = rowMins.Max();
+                double upperValue = colMaxs.Min();
+
+                int optI = Array.IndexOf(rowMins, lowerValue) + 1;
+                int optJ = Array.IndexOf(colMaxs, upperValue) + 1;
+
+                sb.AppendLine("Пошук сідлової точки:\n");
+                sb.AppendLine($"Знайдено нижню ціну гри: A[{optI}, {optJ}] = {lowerValue:F2}");
+                sb.AppendLine($"Знайдено верхню ціну гри: A[{optI}, {optJ}] = {upperValue:F2}\n");
+
+                p = new double[m];
+                q = new double[n];
+
+                if (Math.Abs(lowerValue - upperValue) < 1e-9)
+                {
+                    v = lowerValue;
+                    p[optI - 1] = 1.0;
+                    q[optJ - 1] = 1.0;
+                    sb.AppendLine("Сідлову точку знайдено! Гра має розв'язок у чистих стратегіях.");
+                    log = sb.ToString();
+                    return true;
+                }
+
+                v = 0;
+                sb.AppendLine("Сідлову точку не знайдено...\n");
+                sb.AppendLine("Розв'язання матричної гри симплекс-методом...\n");
+                log = sb.ToString();
+                return false;
+            }
+
+            /// <summary>
+            /// Розв'язання гри у змішаних стратегіях через ЛП
+            /// </summary>
+            public static void SolveMatrixGameLP(double[,] matrix, out double v, out double[] p, out double[] q, out string log)
+            {
+                StringBuilder fullLog = new StringBuilder();
+                int m = matrix.GetLength(0); // Стратегії гравця А (рядки)
+                int n = matrix.GetLength(1); // Стратегії гравця В (стовпці)
+
+                // 1. Зсув матриці, щоб усі елементи були > 0 (вимога ЛП для ціни гри > 0)
+                double minVal = double.MaxValue;
+                foreach (double val in matrix) if (val < minVal) minVal = val;
+                double shift = minVal <= 0 ? Math.Abs(minVal) + 1.0 : 0.0;
+
+                double[,] shiftedMatrix = new double[m, n];
+                for (int i = 0; i < m; i++)
+                    for (int j = 0; j < n; j++)
+                        shiftedMatrix[i, j] = matrix[i, j] + shift;
+
+                // 2. Формування прямої задачі (для Гравця 2 - q)
+                string zExpr = string.Join("+", Enumerable.Range(1, n).Select(i => $"1x{i}"));
+                List<string> constraints = new List<string>();
+
+                fullLog.AppendLine("Постановка прямої задачі (для 2-го гравця):\n");
+                fullLog.AppendLine($"Z = {string.Join(" + ", Enumerable.Range(1, n).Select(i => $"q{i}"))} -> max\n");
+                fullLog.AppendLine("при обмеженнях:");
+
+                for (int i = 0; i < m; i++)
+                {
+                    string constr = string.Join("+", Enumerable.Range(0, n).Select(j => $"{shiftedMatrix[i, j]}x{j + 1}")) + "<=1";
+                    constraints.Add(constr);
+                    fullLog.AppendLine(constr.Replace("x", "q"));
+                }
+                fullLog.AppendLine();
+
+                // 3. Виклик розробленого методу пари двоїстих задач
+                int[] rowVars, colVars;
+                double[,] table = BuildInitialTable(zExpr, constraints, n, false, out rowVars, out colVars);
+                table = SolveDualPair(table, ref rowVars, ref colVars, n, false, out string lpLog);
+                fullLog.Append(lpLog);
+
+                // 4. Отримання результатів з таблиці
+                int zRowIdx = table.GetLength(0) - 1;
+                int rhsCol = table.GetLength(1) - 1;
+                double zMax = table[zRowIdx, rhsCol]; // 1 / V
+
+                double vShifted = 1.0 / zMax;
+                v = vShifted - shift; // Повертаємо ціну гри назад
+
+                p = new double[m]; // Стратегії першого гравця (з двоїстих оцінок U)
+                q = new double[n]; // Стратегії другого гравця (з вектора X)
+
+                // Зчитуємо X (які є y_j для гравця 2)
+                for (int i = 0; i < m; i++)
+                {
+                    int targetVar = -(i + 1); // Шукаємо у-змінні в шапці (двоїсті оцінки)
+                    double uVal = 0;
+                    for (int j = 0; j < n; j++)
+                    {
+                        if (colVars[j] == targetVar) { uVal = table[zRowIdx, j]; break; }
+                    }
+                    p[i] = uVal * vShifted;
+                }
+
+                // Зчитуємо U (які є x_i для гравця 1)
+                for (int i = 0; i < table.GetLength(0) - 1; i++)
+                {
+                    int varIndex = rowVars[i];
+                    if (varIndex >= 1 && varIndex <= n)
+                    {
+                        q[varIndex - 1] = table[i, rhsCol] * vShifted;
+                    }
+                }
+
+                fullLog.AppendLine("Розрахунок змішаних стратегій...\n");
+                fullLog.AppendLine($"Стратегії 1-го гравця (p): {string.Join("; ", p.Select(x => x.ToString("F2")))}");
+                fullLog.AppendLine($"Стратегії 2-го гравця (q): {string.Join("; ", q.Select(x => x.ToString("F2")))}");
+                fullLog.AppendLine($"\nОстаточна ціна гри: {v:F2}");
+
+                log = fullLog.ToString();
+            }
+
+            /// <summary>
+            /// Моделювання партії методом Монте-Карло
+            /// </summary>
+            public static System.Data.DataTable SimulateGame(double[,] matrix, double[] p, double[] q, int iterations)
+            {
+                System.Data.DataTable dt = new System.Data.DataTable();
+                dt.Columns.Add("№ Партії", typeof(int));
+                dt.Columns.Add("Випадкове число A", typeof(double));
+                dt.Columns.Add("Стратегія A", typeof(string));
+                dt.Columns.Add("Випадкове число B", typeof(double));
+                dt.Columns.Add("Стратегія B", typeof(string));
+                dt.Columns.Add("Виграш A", typeof(double));
+                dt.Columns.Add("Накопичений виграш", typeof(double));
+                dt.Columns.Add("Середній виграш", typeof(double));
+
+                Random rnd = new Random();
+                double cumulativeP = 0, cumulativeQ = 0;
+                double[] pCum = new double[p.Length];
+                double[] qCum = new double[q.Length];
+
+                for (int i = 0; i < p.Length; i++) { cumulativeP += p[i]; pCum[i] = cumulativeP; }
+                for (int i = 0; i < q.Length; i++) { cumulativeQ += q[i]; qCum[i] = cumulativeQ; }
+
+                double totalPayoff = 0;
+
+                for (int iter = 1; iter <= iterations; iter++)
+                {
+                    double rA = rnd.NextDouble();
+                    double rB = rnd.NextDouble();
+
+                    int stratA = 0, stratB = 0;
+                    for (int i = 0; i < pCum.Length; i++) if (rA <= pCum[i]) { stratA = i; break; }
+                    for (int i = 0; i < qCum.Length; i++) if (rB <= qCum[i]) { stratB = i; break; }
+
+                    double payoff = matrix[stratA, stratB];
+                    totalPayoff += payoff;
+
+                    dt.Rows.Add(iter, Math.Round(rA, 3), $"X{stratA + 1}", Math.Round(rB, 3), $"Y{stratB + 1}", payoff, totalPayoff, Math.Round(totalPayoff / iter, 3));
+                }
+                return dt;
+            }
         }
     }
 }

@@ -6,6 +6,10 @@ namespace ASSPR_1
 {
     public partial class Form1 : Form
     {
+        private double[] globalP;
+        private double[] globalQ;
+        private double[,] globalMatrix;
+
         public Form1()
         {
             Console.OutputEncoding = Encoding.UTF8;
@@ -14,7 +18,7 @@ namespace ASSPR_1
 
         private void Form1_Load(object sender, EventArgs e)
         {
-
+            dgvSimulation.Anchor = AnchorStyles.Top | AnchorStyles.Bottom | AnchorStyles.Left | AnchorStyles.Right;
         }
 
         private void ShowMatrixInGrid(double[,] matrix, DataGridView grid)
@@ -383,16 +387,6 @@ namespace ASSPR_1
             txtZ.Text = $"Z = {zValue:F1}";
         }
 
-        private void numericUpDown1_ValueChanged(object sender, EventArgs e)
-        {
-
-        }
-
-        private void txtY_TextChanged(object sender, EventArgs e)
-        {
-
-        }
-
         //Part_C
 
         private void btnSolveLP_C_Click(object sender, EventArgs e)
@@ -630,7 +624,7 @@ namespace ASSPR_1
                     {
                         fullLog.Append($"({table[i, j]:F2}) * X[{j + 1}]" + (j < n - 1 ? " + " : ""));
                     }
-                    fullLog.AppendLine($" + ({table[i, n]:F2}) >= 0"); 
+                    fullLog.AppendLine($" + ({table[i, n]:F2}) >= 0");
                 }
                 fullLog.AppendLine();
 
@@ -644,7 +638,7 @@ namespace ASSPR_1
 
                     fullLog.AppendLine($"Max (Z) = {zValue:F2}");
                     fullLog.AppendLine($"Min (W) = {zValue:F2}");
-                    
+
                     txtX_2.Text = $"Розв'язки прямої задачі:";
                     txtX_2.Text += Environment.NewLine + MathHelper.GetXVectorString(table, rowVars, colVars, varCount);
                     txtX_2.Text += Environment.NewLine + $"Розв'язки двоїстої задачі:";
@@ -685,6 +679,120 @@ namespace ASSPR_1
             dgvConstraints_2.Rows.Add("x2>=0");
 
             txtX_2.Text = "";
+        }
+
+        //Part_3
+        private void btnSolveGame_Click(object sender, EventArgs e)
+        {
+            try
+            {
+                // Зчитування матриці гри з dgvMatrixGame
+                globalMatrix = GetMatrixFromGrid(dgvMatrixGame);
+
+                StringBuilder log = new StringBuilder();
+                log.AppendLine("Матриця А:\n");
+                MathHelper.LogMatrix(log, globalMatrix);
+                log.AppendLine();
+
+                double v;
+
+                // 1. Шукаємо сідлову точку
+                if (MathHelper.FindSaddlePoint(globalMatrix, out v, out globalP, out globalQ, out string saddleLog))
+                {
+                    log.Append(saddleLog);
+                }
+                else
+                {
+                    log.Append(saddleLog);
+                    // 2. Якщо сідлової точки немає, розв'язуємо через ЛП
+                    MathHelper.SolveMatrixGameLP(globalMatrix, out v, out globalP, out globalQ, out string lpLog);
+                    log.Append(lpLog);
+                }
+
+                // Виведення результатів на форму
+                txtP.Text = string.Join("; ", globalP.Select(x => x.ToString("F2")));
+                txtQ.Text = string.Join("; ", globalQ.Select(x => x.ToString("F2")));
+                txtV.Text = v.ToString("F2");
+
+                SaveLogToFile(log.ToString());
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show("Помилка: " + ex.Message);
+            }
+        }
+
+        private void btnSimulate_Click(object sender, EventArgs e)
+        {
+            try
+            {
+                if (globalP == null || globalQ == null)
+                    throw new Exception("Спочатку знайдіть розв'язок гри!");
+
+                int iterations = (int)nudIterations.Value; // Зчитати кількість партій (напр. 50)
+
+                // Моделюємо гру
+                System.Data.DataTable simTable = MathHelper.SimulateGame(globalMatrix, globalP, globalQ, iterations);
+
+                // Виводимо в таблицю
+                dgvSimulation.DataSource = simTable;
+
+                dgvSimulation.AutoSizeColumnsMode = DataGridViewAutoSizeColumnsMode.Fill;
+
+                // 2. Дозволяємо системі автоматично підлаштувати висоту рядків під контент
+                dgvSimulation.AutoSizeRowsMode = DataGridViewAutoSizeRowsMode.AllCells;
+
+                // 3. Робимо шрифти трохи більшими та вирівнюємо текст по центру для гарного вигляду
+                dgvSimulation.DefaultCellStyle.Alignment = DataGridViewContentAlignment.MiddleCenter;
+                dgvSimulation.ColumnHeadersDefaultCellStyle.Alignment = DataGridViewContentAlignment.MiddleCenter;
+
+                double finalAverage = Convert.ToDouble(simTable.Rows[iterations - 1]["Середній виграш"]);
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show("Помилка: " + ex.Message);
+            }
+        }
+
+        private void btnExamplePart3_Click(object sender, EventArgs e)
+        {
+            //dgvMatrixGame.ColumnCount = 3;
+
+            //dgvMatrixGame.Rows.Add(5, 2, 7);
+            //dgvMatrixGame.Rows.Add(1, 4, 3);
+            //dgvMatrixGame.Rows.Add(6, 1, 5);
+
+
+            //dgvMatrixGame.ColumnCount = 4;
+
+            //dgvMatrixGame.Rows.Add(2, -1, 3, 3);
+            //dgvMatrixGame.Rows.Add(-1, 2, 2, 7);
+            //dgvMatrixGame.Rows.Add(1, 1, 1, 2);
+
+
+            //dgvMatrixGame.ColumnCount = 4;
+
+            //dgvMatrixGame.Rows.Add(3, 2, 6, 9);
+            //dgvMatrixGame.Rows.Add(10, 8, 1, 3);
+
+
+            //dgvMatrixGame.ColumnCount = 3;
+
+            //dgvMatrixGame.Rows.Add(3, 5, 1);
+            //dgvMatrixGame.Rows.Add(-2, 2, -3);
+            //dgvMatrixGame.Rows.Add(1, 3, -2);
+
+
+            //dgvMatrixGame.ColumnCount = 2;
+
+            //dgvMatrixGame.Rows.Add(15, 19);
+            //dgvMatrixGame.Rows.Add(17, 11);
+
+
+            dgvMatrixGame.ColumnCount = 4;
+
+            dgvMatrixGame.Rows.Add(8, 12, 6, 10);
+            dgvMatrixGame.Rows.Add(14, 7, 12, 4);
         }
     }
 }
