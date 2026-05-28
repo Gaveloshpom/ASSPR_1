@@ -135,6 +135,32 @@ namespace ASSPR_1
             txtP = new TextBox();
             Part_3_Sim = new TabPage();
             dgvSimulation = new DataGridView();
+            Part_4 = new TabPage();
+            txtAlpha = new TextBox();
+            label39 = new Label();
+            txtBestOverall = new TextBox();
+            label38 = new Label();
+            txtLaplace = new TextBox();
+            label37 = new Label();
+            label36 = new Label();
+            txtBayes = new TextBox();
+            txtSavage = new TextBox();
+            label35 = new Label();
+            txtHurwicz = new TextBox();
+            label26 = new Label();
+            txtWald = new TextBox();
+            label31 = new Label();
+            txtOpt = new TextBox();
+            dgvNatureGame = new DataGridView();
+            dataGridViewTextBoxColumn4 = new DataGridViewTextBoxColumn();
+            dataGridViewTextBoxColumn8 = new DataGridViewTextBoxColumn();
+            dataGridViewTextBoxColumn9 = new DataGridViewTextBoxColumn();
+            label32 = new Label();
+            label33 = new Label();
+            label34 = new Label();
+            btnPart_4 = new Button();
+            btnSolveNatureGame = new Button();
+            txtProbabilities = new TextBox();
             ((System.ComponentModel.ISupportInitialize)dgvMatrixA).BeginInit();
             ((System.ComponentModel.ISupportInitialize)dgvVectorB).BeginInit();
             ((System.ComponentModel.ISupportInitialize)dgvResult).BeginInit();
@@ -159,6 +185,8 @@ namespace ASSPR_1
             ((System.ComponentModel.ISupportInitialize)nudIterations).BeginInit();
             Part_3_Sim.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)dgvSimulation).BeginInit();
+            Part_4.SuspendLayout();
+            ((System.ComponentModel.ISupportInitialize)dgvNatureGame).BeginInit();
             SuspendLayout();
             // 
             // dgvMatrixA
@@ -361,6 +389,7 @@ namespace ASSPR_1
             tabControl1.Controls.Add(Part_2);
             tabControl1.Controls.Add(Part_3);
             tabControl1.Controls.Add(Part_3_Sim);
+            tabControl1.Controls.Add(Part_4);
             tabControl1.Location = new Point(-3, 25);
             tabControl1.Name = "tabControl1";
             tabControl1.SelectedIndex = 0;
@@ -1189,6 +1218,248 @@ namespace ASSPR_1
             dgvSimulation.Size = new Size(810, 439);
             dgvSimulation.TabIndex = 77;
             // 
+            // Part_4
+            // 
+            Part_4.Controls.Add(txtAlpha);
+            Part_4.Controls.Add(label39);
+            Part_4.Controls.Add(txtBestOverall);
+            Part_4.Controls.Add(label38);
+            Part_4.Controls.Add(txtLaplace);
+            Part_4.Controls.Add(label37);
+            Part_4.Controls.Add(label36);
+            Part_4.Controls.Add(txtBayes);
+            Part_4.Controls.Add(txtSavage);
+            Part_4.Controls.Add(label35);
+            Part_4.Controls.Add(txtHurwicz);
+            Part_4.Controls.Add(label26);
+            Part_4.Controls.Add(txtWald);
+            Part_4.Controls.Add(label31);
+            Part_4.Controls.Add(txtOpt);
+            Part_4.Controls.Add(dgvNatureGame);
+            Part_4.Controls.Add(label32);
+            Part_4.Controls.Add(label33);
+            Part_4.Controls.Add(label34);
+            Part_4.Controls.Add(btnPart_4);
+            Part_4.Controls.Add(btnSolveNatureGame);
+            Part_4.Controls.Add(txtProbabilities);
+            Part_4.Location = new Point(4, 24);
+            Part_4.Name = "Part_4";
+            Part_4.Padding = new Padding(3);
+            Part_4.Size = new Size(819, 451);
+            Part_4.TabIndex = 7;
+            Part_4.Text = "Part_4";
+            Part_4.UseVisualStyleBackColor = true;
+            // 
+            // txtAlpha
+            // 
+            txtAlpha.Location = new Point(487, 38);
+            txtAlpha.Name = "txtAlpha";
+            txtAlpha.Size = new Size(210, 23);
+            txtAlpha.TabIndex = 97;
+            // 
+            // label39
+            // 
+            label39.AutoSize = true;
+            label39.Font = new Font("Segoe UI", 10F);
+            label39.Location = new Point(255, 343);
+            label39.Name = "label39";
+            label39.Size = new Size(136, 19);
+            label39.TabIndex = 96;
+            label39.Text = "Найчастіші стратегії:";
+            // 
+            // txtBestOverall
+            // 
+            txtBestOverall.Location = new Point(255, 365);
+            txtBestOverall.Name = "txtBestOverall";
+            txtBestOverall.Size = new Size(210, 23);
+            txtBestOverall.TabIndex = 95;
+            // 
+            // label38
+            // 
+            label38.AutoSize = true;
+            label38.Font = new Font("Segoe UI", 10F);
+            label38.Location = new Point(255, 285);
+            label38.Name = "label38";
+            label38.Size = new Size(123, 19);
+            label38.TabIndex = 94;
+            label38.Text = "Критерій Лапласа:";
+            // 
+            // txtLaplace
+            // 
+            txtLaplace.Location = new Point(255, 307);
+            txtLaplace.Name = "txtLaplace";
+            txtLaplace.Size = new Size(210, 23);
+            txtLaplace.TabIndex = 93;
+            // 
+            // label37
+            // 
+            label37.AutoSize = true;
+            label37.Font = new Font("Segoe UI", 10F);
+            label37.Location = new Point(255, 229);
+            label37.Name = "label37";
+            label37.Size = new Size(114, 19);
+            label37.TabIndex = 92;
+            label37.Text = "Критерій Байєса:";
+            // 
+            // label36
+            // 
+            label36.AutoSize = true;
+            label36.Font = new Font("Segoe UI", 10F);
+            label36.Location = new Point(487, 343);
+            label36.Name = "label36";
+            label36.Size = new Size(123, 19);
+            label36.TabIndex = 92;
+            label36.Text = "Критерій Севіджа:";
+            // 
+            // txtBayes
+            // 
+            txtBayes.Location = new Point(255, 251);
+            txtBayes.Name = "txtBayes";
+            txtBayes.Size = new Size(210, 23);
+            txtBayes.TabIndex = 91;
+            // 
+            // txtSavage
+            // 
+            txtSavage.Location = new Point(487, 365);
+            txtSavage.Name = "txtSavage";
+            txtSavage.Size = new Size(210, 23);
+            txtSavage.TabIndex = 91;
+            // 
+            // label35
+            // 
+            label35.AutoSize = true;
+            label35.Font = new Font("Segoe UI", 10F);
+            label35.Location = new Point(487, 285);
+            label35.Name = "label35";
+            label35.Size = new Size(119, 19);
+            label35.TabIndex = 90;
+            label35.Text = "Критерій Гурвіца:";
+            // 
+            // txtHurwicz
+            // 
+            txtHurwicz.Location = new Point(487, 307);
+            txtHurwicz.Name = "txtHurwicz";
+            txtHurwicz.Size = new Size(210, 23);
+            txtHurwicz.TabIndex = 89;
+            // 
+            // label26
+            // 
+            label26.AutoSize = true;
+            label26.Font = new Font("Segoe UI", 10F);
+            label26.Location = new Point(487, 176);
+            label26.Name = "label26";
+            label26.Size = new Size(116, 19);
+            label26.TabIndex = 87;
+            label26.Text = "Критерій Вальда:";
+            // 
+            // txtWald
+            // 
+            txtWald.Location = new Point(487, 198);
+            txtWald.Name = "txtWald";
+            txtWald.Size = new Size(210, 23);
+            txtWald.TabIndex = 86;
+            // 
+            // label31
+            // 
+            label31.AutoSize = true;
+            label31.Font = new Font("Segoe UI", 10F);
+            label31.Location = new Point(487, 229);
+            label31.Name = "label31";
+            label31.Size = new Size(142, 19);
+            label31.TabIndex = 85;
+            label31.Text = "Критерій максімаксу:";
+            // 
+            // txtOpt
+            // 
+            txtOpt.Location = new Point(487, 251);
+            txtOpt.Name = "txtOpt";
+            txtOpt.Size = new Size(210, 23);
+            txtOpt.TabIndex = 84;
+            // 
+            // dgvNatureGame
+            // 
+            dgvNatureGame.AllowUserToAddRows = false;
+            dgvNatureGame.AllowUserToDeleteRows = false;
+            dgvNatureGame.AutoSizeColumnsMode = DataGridViewAutoSizeColumnsMode.Fill;
+            dgvNatureGame.ColumnHeadersHeightSizeMode = DataGridViewColumnHeadersHeightSizeMode.AutoSize;
+            dgvNatureGame.Columns.AddRange(new DataGridViewColumn[] { dataGridViewTextBoxColumn4, dataGridViewTextBoxColumn8, dataGridViewTextBoxColumn9 });
+            dgvNatureGame.Location = new Point(32, 45);
+            dgvNatureGame.Name = "dgvNatureGame";
+            dgvNatureGame.Size = new Size(240, 150);
+            dgvNatureGame.TabIndex = 83;
+            // 
+            // dataGridViewTextBoxColumn4
+            // 
+            dataGridViewTextBoxColumn4.HeaderText = "Column1";
+            dataGridViewTextBoxColumn4.Name = "dataGridViewTextBoxColumn4";
+            // 
+            // dataGridViewTextBoxColumn8
+            // 
+            dataGridViewTextBoxColumn8.HeaderText = "Column2";
+            dataGridViewTextBoxColumn8.Name = "dataGridViewTextBoxColumn8";
+            // 
+            // dataGridViewTextBoxColumn9
+            // 
+            dataGridViewTextBoxColumn9.HeaderText = "Column3";
+            dataGridViewTextBoxColumn9.Name = "dataGridViewTextBoxColumn9";
+            // 
+            // label32
+            // 
+            label32.AutoSize = true;
+            label32.Font = new Font("Segoe UI", 10F);
+            label32.Location = new Point(487, 16);
+            label32.Name = "label32";
+            label32.Size = new Size(91, 19);
+            label32.TabIndex = 82;
+            label32.Text = "Коефіцієнт Y:";
+            // 
+            // label33
+            // 
+            label33.AutoSize = true;
+            label33.Font = new Font("Segoe UI", 10F);
+            label33.Location = new Point(32, 23);
+            label33.Name = "label33";
+            label33.Size = new Size(230, 19);
+            label33.TabIndex = 81;
+            label33.Text = "Матриця корисності результатів U:";
+            // 
+            // label34
+            // 
+            label34.AutoSize = true;
+            label34.Font = new Font("Segoe UI", 10F);
+            label34.Location = new Point(487, 64);
+            label34.Name = "label34";
+            label34.Size = new Size(126, 19);
+            label34.TabIndex = 80;
+            label34.Text = "Стратегії природи:";
+            // 
+            // btnPart_4
+            // 
+            btnPart_4.Location = new Point(288, 127);
+            btnPart_4.Name = "btnPart_4";
+            btnPart_4.Size = new Size(177, 39);
+            btnPart_4.TabIndex = 78;
+            btnPart_4.Text = "Приклад";
+            btnPart_4.UseVisualStyleBackColor = true;
+            btnPart_4.Click += btnPart_4_Click;
+            // 
+            // btnSolveNatureGame
+            // 
+            btnSolveNatureGame.Location = new Point(487, 127);
+            btnSolveNatureGame.Name = "btnSolveNatureGame";
+            btnSolveNatureGame.Size = new Size(210, 39);
+            btnSolveNatureGame.TabIndex = 77;
+            btnSolveNatureGame.Text = "Знайти оптимальні стратегії";
+            btnSolveNatureGame.UseVisualStyleBackColor = true;
+            btnSolveNatureGame.Click += btnSolveNatureGame_Click;
+            // 
+            // txtProbabilities
+            // 
+            txtProbabilities.Location = new Point(487, 86);
+            txtProbabilities.Name = "txtProbabilities";
+            txtProbabilities.Size = new Size(210, 23);
+            txtProbabilities.TabIndex = 76;
+            // 
             // Form1
             // 
             AutoScaleDimensions = new SizeF(7F, 15F);
@@ -1228,6 +1499,9 @@ namespace ASSPR_1
             ((System.ComponentModel.ISupportInitialize)nudIterations).EndInit();
             Part_3_Sim.ResumeLayout(false);
             ((System.ComponentModel.ISupportInitialize)dgvSimulation).EndInit();
+            Part_4.ResumeLayout(false);
+            Part_4.PerformLayout();
+            ((System.ComponentModel.ISupportInitialize)dgvNatureGame).EndInit();
             ResumeLayout(false);
         }
 
@@ -1338,5 +1612,32 @@ namespace ASSPR_1
         private TextBox txtP;
         private TabPage Part_3_Sim;
         private DataGridView dgvSimulation;
+        private TabPage Part_4;
+        private Label label26;
+        private TextBox txtWald;
+        private Label label31;
+        private TextBox txtOpt;
+        private DataGridView dgvNatureGame;
+        private DataGridViewTextBoxColumn dataGridViewTextBoxColumn4;
+        private DataGridViewTextBoxColumn dataGridViewTextBoxColumn8;
+        private DataGridViewTextBoxColumn dataGridViewTextBoxColumn9;
+        private Label label32;
+        private Label label33;
+        private Label label34;
+        private NumericUpDown numericUpDown1;
+        private Button btnPart_4;
+        private Button btnSolveNatureGame;
+        private TextBox txtProbabilities;
+        private Label label36;
+        private TextBox txtSavage;
+        private Label label35;
+        private TextBox txtHurwicz;
+        private Label label39;
+        private TextBox txtBestOverall;
+        private Label label38;
+        private TextBox txtLaplace;
+        private Label label37;
+        private TextBox txtBayes;
+        private TextBox txtAlpha;
     }
 }

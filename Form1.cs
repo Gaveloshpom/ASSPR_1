@@ -756,6 +756,7 @@ namespace ASSPR_1
 
         private void btnExamplePart3_Click(object sender, EventArgs e)
         {
+            dgvNatureGame.Rows.Clear();
             //dgvMatrixGame.ColumnCount = 3;
 
             //dgvMatrixGame.Rows.Add(5, 2, 7);
@@ -793,6 +794,87 @@ namespace ASSPR_1
 
             dgvMatrixGame.Rows.Add(8, 12, 6, 10);
             dgvMatrixGame.Rows.Add(14, 7, 12, 4);
+        }
+
+        private void btnSolveNatureGame_Click(object sender, EventArgs e)
+        {
+            try
+            {
+                // 1. Зчитування матриці гри
+                double[,] matrix = GetMatrixFromGrid(dgvNatureGame);
+
+                // 2. Зчитування коефіцієнта альфа (Гурвіц)
+                double alpha = 0.5; // Значення за замовчуванням
+                if (!string.IsNullOrWhiteSpace(txtAlpha.Text))
+                {
+                    alpha = Convert.ToDouble(txtAlpha.Text.Replace(".", ","));
+                    if (alpha < 0 || alpha > 1) throw new Exception("Коефіцієнт альфа має бути в межах від 0 до 1.");
+                }
+
+                // 3. Зчитування ймовірностей (Байєс)
+                double[] probabilities = null;
+                if (!string.IsNullOrWhiteSpace(txtProbabilities.Text))
+                {
+                    string[] parts = txtProbabilities.Text.Split(new[] { ';', ',', ' ' }, StringSplitOptions.RemoveEmptyEntries);
+                    probabilities = new double[parts.Length];
+                    for (int i = 0; i < parts.Length; i++)
+                    {
+                        probabilities[i] = Convert.ToDouble(parts[i].Replace(".", ","));
+                    }
+                }
+
+                // 4. Виклик математики (З ВЕЛИКОЮ КІЛЬКІСТЮ OUT ПАРАМЕТРІВ)
+                MathHelper.SolveGameAgainstNature(
+                    matrix, alpha, probabilities,
+                    out string log,
+                    out string resWald, out string resOpt, out string resHurwicz,
+                    out string resSavage, out string resLaplace, out string resBayes,
+                    out string bestOverall);
+
+                // 5. Виведення результатів у відповідні TextBox-и
+                txtWald.Text = resWald;
+                txtOpt.Text = resOpt;
+                txtHurwicz.Text = resHurwicz;
+                txtSavage.Text = resSavage;
+                txtLaplace.Text = resLaplace;
+                txtBayes.Text = resBayes;
+                txtBestOverall.Text = bestOverall;
+
+                // 6. Вивід протоколу в багаторядкове поле та збереження у файл
+                SaveLogToFile(log);
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show("Помилка: " + ex.Message, "Помилка", MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
+        }
+
+        private void btnPart_4_Click(object sender, EventArgs e)
+        {
+            dgvNatureGame.Rows.Clear();
+            //dgvNatureGame.ColumnCount = 4;
+
+            //dgvNatureGame.Rows.Add(-1, 1, 1, 4);
+            //dgvNatureGame.Rows.Add(-1, -2, 2, 3);
+            //dgvNatureGame.Rows.Add(3, -1, 3, 2);
+            //txtProbabilities.Text = "0.2 0.4 0.1 0.3";
+            //txtAlpha.Text = "0.3";
+
+            //dgvNatureGame.ColumnCount = 4;
+
+            //dgvNatureGame.Rows.Add(2, -1, 3, 4);
+            //dgvNatureGame.Rows.Add(-1, 2, 3, 7);
+            //dgvNatureGame.Rows.Add(5, 4, 6, 2);
+            //txtProbabilities.Text = "0.4 0.1 0.2 0.3";
+            //txtAlpha.Text = "0.4";
+
+            dgvNatureGame.ColumnCount = 4;
+
+            dgvNatureGame.Rows.Add(4, -2, -3, 1);
+            dgvNatureGame.Rows.Add(-1, 1, -2, 2);
+            dgvNatureGame.Rows.Add(-1, -1, -4, 6);
+            txtProbabilities.Text = "0.2 0.3 0.3 0.2";
+            txtAlpha.Text = "0.3";
         }
     }
 }
