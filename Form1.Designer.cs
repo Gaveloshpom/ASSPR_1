@@ -116,6 +116,25 @@ namespace ASSPR_1
             rbMin_2 = new RadioButton();
             btnSolveLP_2 = new Button();
             txtZ_2 = new TextBox();
+            Part_3 = new TabPage();
+            btnSimulate = new Button();
+            label30 = new Label();
+            txtV = new TextBox();
+            label29 = new Label();
+            txtQ = new TextBox();
+            dgvMatrixGame = new DataGridView();
+            dataGridViewTextBoxColumn5 = new DataGridViewTextBoxColumn();
+            dataGridViewTextBoxColumn6 = new DataGridViewTextBoxColumn();
+            dataGridViewTextBoxColumn7 = new DataGridViewTextBoxColumn();
+            label21 = new Label();
+            label27 = new Label();
+            label28 = new Label();
+            nudIterations = new NumericUpDown();
+            btnExamplePart3 = new Button();
+            btnSolveGame = new Button();
+            txtP = new TextBox();
+            Part_3_Sim = new TabPage();
+            dgvSimulation = new DataGridView();
             ((System.ComponentModel.ISupportInitialize)dgvMatrixA).BeginInit();
             ((System.ComponentModel.ISupportInitialize)dgvVectorB).BeginInit();
             ((System.ComponentModel.ISupportInitialize)dgvResult).BeginInit();
@@ -135,6 +154,11 @@ namespace ASSPR_1
             Part_2.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)dgvConstraints_2).BeginInit();
             ((System.ComponentModel.ISupportInitialize)nudVarCount_2).BeginInit();
+            Part_3.SuspendLayout();
+            ((System.ComponentModel.ISupportInitialize)dgvMatrixGame).BeginInit();
+            ((System.ComponentModel.ISupportInitialize)nudIterations).BeginInit();
+            Part_3_Sim.SuspendLayout();
+            ((System.ComponentModel.ISupportInitialize)dgvSimulation).BeginInit();
             SuspendLayout();
             // 
             // dgvMatrixA
@@ -335,6 +359,8 @@ namespace ASSPR_1
             tabControl1.Controls.Add(Part_C);
             tabControl1.Controls.Add(Part_D);
             tabControl1.Controls.Add(Part_2);
+            tabControl1.Controls.Add(Part_3);
+            tabControl1.Controls.Add(Part_3_Sim);
             tabControl1.Location = new Point(-3, 25);
             tabControl1.Name = "tabControl1";
             tabControl1.SelectedIndex = 0;
@@ -422,7 +448,6 @@ namespace ASSPR_1
             txtY.Name = "txtY";
             txtY.Size = new Size(194, 23);
             txtY.TabIndex = 12;
-            txtY.TextChanged += txtY_TextChanged;
             // 
             // label9
             // 
@@ -635,7 +660,6 @@ namespace ASSPR_1
             nudVarCount_C.Name = "nudVarCount_C";
             nudVarCount_C.Size = new Size(106, 23);
             nudVarCount_C.TabIndex = 21;
-            nudVarCount_C.ValueChanged += numericUpDown1_ValueChanged;
             // 
             // btnExample_C
             // 
@@ -985,6 +1009,186 @@ namespace ASSPR_1
             txtZ_2.Size = new Size(210, 23);
             txtZ_2.TabIndex = 44;
             // 
+            // Part_3
+            // 
+            Part_3.Controls.Add(btnSimulate);
+            Part_3.Controls.Add(label30);
+            Part_3.Controls.Add(txtV);
+            Part_3.Controls.Add(label29);
+            Part_3.Controls.Add(txtQ);
+            Part_3.Controls.Add(dgvMatrixGame);
+            Part_3.Controls.Add(label21);
+            Part_3.Controls.Add(label27);
+            Part_3.Controls.Add(label28);
+            Part_3.Controls.Add(nudIterations);
+            Part_3.Controls.Add(btnExamplePart3);
+            Part_3.Controls.Add(btnSolveGame);
+            Part_3.Controls.Add(txtP);
+            Part_3.Location = new Point(4, 24);
+            Part_3.Name = "Part_3";
+            Part_3.Padding = new Padding(3);
+            Part_3.Size = new Size(819, 451);
+            Part_3.TabIndex = 5;
+            Part_3.Text = "Part_3";
+            Part_3.UseVisualStyleBackColor = true;
+            // 
+            // btnSimulate
+            // 
+            btnSimulate.Location = new Point(497, 339);
+            btnSimulate.Name = "btnSimulate";
+            btnSimulate.Size = new Size(210, 41);
+            btnSimulate.TabIndex = 75;
+            btnSimulate.Text = "Змоделювати гру";
+            btnSimulate.UseVisualStyleBackColor = true;
+            btnSimulate.Click += btnSimulate_Click;
+            // 
+            // label30
+            // 
+            label30.AutoSize = true;
+            label30.Font = new Font("Segoe UI", 10F);
+            label30.Location = new Point(497, 126);
+            label30.Name = "label30";
+            label30.Size = new Size(65, 19);
+            label30.TabIndex = 74;
+            label30.Text = "Ціна гри:";
+            // 
+            // txtV
+            // 
+            txtV.Location = new Point(497, 148);
+            txtV.Name = "txtV";
+            txtV.Size = new Size(210, 23);
+            txtV.TabIndex = 73;
+            // 
+            // label29
+            // 
+            label29.AutoSize = true;
+            label29.Font = new Font("Segoe UI", 10F);
+            label29.Location = new Point(497, 67);
+            label29.Name = "label29";
+            label29.Size = new Size(194, 19);
+            label29.TabIndex = 72;
+            label29.Text = "Змішані стратегії 2-го гравця:";
+            // 
+            // txtQ
+            // 
+            txtQ.Location = new Point(497, 89);
+            txtQ.Name = "txtQ";
+            txtQ.Size = new Size(210, 23);
+            txtQ.TabIndex = 71;
+            // 
+            // dgvMatrixGame
+            // 
+            dgvMatrixGame.AllowUserToAddRows = false;
+            dgvMatrixGame.AllowUserToDeleteRows = false;
+            dgvMatrixGame.AutoSizeColumnsMode = DataGridViewAutoSizeColumnsMode.Fill;
+            dgvMatrixGame.ColumnHeadersHeightSizeMode = DataGridViewColumnHeadersHeightSizeMode.AutoSize;
+            dgvMatrixGame.Columns.AddRange(new DataGridViewColumn[] { dataGridViewTextBoxColumn5, dataGridViewTextBoxColumn6, dataGridViewTextBoxColumn7 });
+            dgvMatrixGame.Location = new Point(43, 86);
+            dgvMatrixGame.Name = "dgvMatrixGame";
+            dgvMatrixGame.Size = new Size(240, 150);
+            dgvMatrixGame.TabIndex = 70;
+            // 
+            // dataGridViewTextBoxColumn5
+            // 
+            dataGridViewTextBoxColumn5.HeaderText = "Column1";
+            dataGridViewTextBoxColumn5.Name = "dataGridViewTextBoxColumn5";
+            // 
+            // dataGridViewTextBoxColumn6
+            // 
+            dataGridViewTextBoxColumn6.HeaderText = "Column2";
+            dataGridViewTextBoxColumn6.Name = "dataGridViewTextBoxColumn6";
+            // 
+            // dataGridViewTextBoxColumn7
+            // 
+            dataGridViewTextBoxColumn7.HeaderText = "Column3";
+            dataGridViewTextBoxColumn7.Name = "dataGridViewTextBoxColumn7";
+            // 
+            // label21
+            // 
+            label21.AutoSize = true;
+            label21.Font = new Font("Segoe UI", 10F);
+            label21.Location = new Point(497, 298);
+            label21.Name = "label21";
+            label21.Size = new Size(93, 19);
+            label21.TabIndex = 68;
+            label21.Text = "Кіл-ть партій:";
+            // 
+            // label27
+            // 
+            label27.AutoSize = true;
+            label27.Font = new Font("Segoe UI", 10F);
+            label27.Location = new Point(43, 64);
+            label27.Name = "label27";
+            label27.Size = new Size(94, 19);
+            label27.TabIndex = 65;
+            label27.Text = "Матриця гри:";
+            // 
+            // label28
+            // 
+            label28.AutoSize = true;
+            label28.Font = new Font("Segoe UI", 10F);
+            label28.Location = new Point(497, 11);
+            label28.Name = "label28";
+            label28.Size = new Size(194, 19);
+            label28.TabIndex = 64;
+            label28.Text = "Змішані стратегії 1-го гравця:";
+            // 
+            // nudIterations
+            // 
+            nudIterations.Location = new Point(601, 298);
+            nudIterations.Name = "nudIterations";
+            nudIterations.Size = new Size(106, 23);
+            nudIterations.TabIndex = 63;
+            // 
+            // btnExamplePart3
+            // 
+            btnExamplePart3.Location = new Point(497, 240);
+            btnExamplePart3.Name = "btnExamplePart3";
+            btnExamplePart3.Size = new Size(210, 39);
+            btnExamplePart3.TabIndex = 62;
+            btnExamplePart3.Text = "Приклад";
+            btnExamplePart3.UseVisualStyleBackColor = true;
+            btnExamplePart3.Click += btnExamplePart3_Click;
+            // 
+            // btnSolveGame
+            // 
+            btnSolveGame.Location = new Point(497, 195);
+            btnSolveGame.Name = "btnSolveGame";
+            btnSolveGame.Size = new Size(210, 39);
+            btnSolveGame.TabIndex = 59;
+            btnSolveGame.Text = "Знайти розв'язки гри";
+            btnSolveGame.UseVisualStyleBackColor = true;
+            btnSolveGame.Click += btnSolveGame_Click;
+            // 
+            // txtP
+            // 
+            txtP.Location = new Point(497, 33);
+            txtP.Name = "txtP";
+            txtP.Size = new Size(210, 23);
+            txtP.TabIndex = 58;
+            // 
+            // Part_3_Sim
+            // 
+            Part_3_Sim.Controls.Add(dgvSimulation);
+            Part_3_Sim.Location = new Point(4, 24);
+            Part_3_Sim.Name = "Part_3_Sim";
+            Part_3_Sim.Padding = new Padding(3);
+            Part_3_Sim.Size = new Size(819, 451);
+            Part_3_Sim.TabIndex = 6;
+            Part_3_Sim.Text = "Part_3_Sim";
+            Part_3_Sim.UseVisualStyleBackColor = true;
+            // 
+            // dgvSimulation
+            // 
+            dgvSimulation.AllowUserToAddRows = false;
+            dgvSimulation.AllowUserToDeleteRows = false;
+            dgvSimulation.ColumnHeadersHeightSizeMode = DataGridViewColumnHeadersHeightSizeMode.AutoSize;
+            dgvSimulation.Location = new Point(6, 6);
+            dgvSimulation.Name = "dgvSimulation";
+            dgvSimulation.ReadOnly = true;
+            dgvSimulation.Size = new Size(810, 439);
+            dgvSimulation.TabIndex = 77;
+            // 
             // Form1
             // 
             AutoScaleDimensions = new SizeF(7F, 15F);
@@ -1018,6 +1222,12 @@ namespace ASSPR_1
             Part_2.PerformLayout();
             ((System.ComponentModel.ISupportInitialize)dgvConstraints_2).EndInit();
             ((System.ComponentModel.ISupportInitialize)nudVarCount_2).EndInit();
+            Part_3.ResumeLayout(false);
+            Part_3.PerformLayout();
+            ((System.ComponentModel.ISupportInitialize)dgvMatrixGame).EndInit();
+            ((System.ComponentModel.ISupportInitialize)nudIterations).EndInit();
+            Part_3_Sim.ResumeLayout(false);
+            ((System.ComponentModel.ISupportInitialize)dgvSimulation).EndInit();
             ResumeLayout(false);
         }
 
@@ -1109,5 +1319,24 @@ namespace ASSPR_1
         private RadioButton rbMin_2;
         private Button btnSolveLP_2;
         private TextBox txtZ_2;
+        private TabPage Part_3;
+        private Button btnSimulate;
+        private Label label30;
+        private TextBox txtV;
+        private Label label29;
+        private TextBox txtQ;
+        private DataGridView dgvMatrixGame;
+        private DataGridViewTextBoxColumn dataGridViewTextBoxColumn5;
+        private DataGridViewTextBoxColumn dataGridViewTextBoxColumn6;
+        private DataGridViewTextBoxColumn dataGridViewTextBoxColumn7;
+        private Label label21;
+        private Label label27;
+        private Label label28;
+        private NumericUpDown nudIterations;
+        private Button btnExamplePart3;
+        private Button btnSolveGame;
+        private TextBox txtP;
+        private TabPage Part_3_Sim;
+        private DataGridView dgvSimulation;
     }
 }
